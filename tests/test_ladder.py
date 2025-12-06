@@ -239,12 +239,6 @@ class TestLadderReporting(unittest.TestCase):
             )
         print("-" * 70)
 
-        print("\nCHALLENGE LADDER REVEAL (G010 only, for debugging)")
-        print("-" * 70)
-        # Reveal one gate to ensure the reveal path works and is deterministic
-        from cellview.utils.ladder import print_ladder_summary
-        print_ladder_summary(challenge_ladder, label="challenge", reveal_gates=["G010"])
-
 
 
 class TestChallengeLadder(unittest.TestCase):

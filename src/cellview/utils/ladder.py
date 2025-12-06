@@ -19,7 +19,7 @@ import random
 import json
 import yaml
 from dataclasses import dataclass, asdict
-from typing import Optional, List, Dict, Any, Union, Sequence
+from typing import Optional, List, Dict, Any, Union
 from pathlib import Path
 from importlib import resources
 from math import isqrt
@@ -302,20 +302,6 @@ VALIDATION_LADDER_YAML = "validation_ladder.yaml"
 CHALLENGE_LADDER_YAML = "challenge_ladder.yaml"
 
 
-def _reveal_hidden_gate(gate: GateSemiprime, ratio: float = RATIO, base_seed: int = BASE_SEED) -> GateSemiprime:
-    """Recompute a hidden gate's factors using its stored effective seed and ratio."""
-    if gate.factors_revealed or gate.effective_seed is None:
-        return gate
-    regenerated = generate_unbalanced_semiprime(
-        bit_size=gate.target_bits,
-        seed=gate.effective_seed,
-        ratio=ratio,
-        reveal_factors=True,
-    )
-    regenerated.gate = gate.gate
-    return regenerated
-
-
 def load_ladder_yaml(path: Union[str, Path] = None, kind: str = "validation") -> Dict[str, Any]:
     """
     Load a ladder definition from YAML.
@@ -364,15 +350,8 @@ def get_gate(gate_name: str, ladder: List[GateSemiprime] = None) -> Optional[Gat
 def print_ladder_summary(
     ladder: List[GateSemiprime] = None,
     label: str = None,
-    reveal_gates: Sequence[str] = (),
 ) -> None:
-    """Print a human-readable summary of the ladder.
-
-    Args:
-        ladder: Pre-generated ladder (validation or challenge). Defaults to verification ladder.
-        label: Optional label override.
-        reveal_gates: Gate names (e.g., ["G010"]) to reveal factors even if hidden (for debugging).
-    """
+    """Print a human-readable summary of the ladder."""
     if ladder is None:
         ladder = generate_ladder()
 
@@ -389,16 +368,12 @@ def print_ladder_summary(
     print("-" * 100)
 
     for g in ladder:
-        gate_obj = g
-        if (not g.factors_revealed) and g.gate in reveal_gates:
-            gate_obj = _reveal_hidden_gate(g)
-
-        if gate_obj.p is None:
-            marker = "[CHALLENGE]" if gate_obj.gate == "G127" else "[WITHHELD]"
-            print(f"{gate_obj.gate:<6} {gate_obj.target_bits:<6} {'?':<8} {'?':<8} {'?':<12} {marker:>24}")
+        if g.p is None:
+            marker = "[CHALLENGE]" if g.gate == "G127" else "[WITHHELD]"
+            print(f"{g.gate:<6} {g.target_bits:<6} {'?':<8} {'?':<8} {'?':<12} {marker:>24}")
         else:
-            print(f"{gate_obj.gate:<6} {gate_obj.actual_bits:<6} {gate_obj.p_bits:<8} {gate_obj.q_bits:<8} "
-                  f"{gate_obj.p_as_fraction_of_sqrt:<12.6f} {gate_obj.p:>24}")
+            print(f"{g.gate:<6} {g.actual_bits:<6} {g.p_bits:<8} {g.q_bits:<8} "
+                  f"{g.p_as_fraction_of_sqrt:<12.6f} {g.p:>24}")
 
     print("=" * 100)
 
