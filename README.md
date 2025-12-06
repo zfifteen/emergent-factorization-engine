@@ -1,22 +1,17 @@
 # Emergent Factorization Engine
 
 ## Abstract
-This project is a whitebox testbed for emergent factorization and morphogenetic search. It pairs a pure-Python prime generator (Z5D-based) with a decentralised “cell-view” engine inspired by Levin et al. (2023) on autonomous sorting. The system intentionally stresses unreliable substrates, mixed behavioral types, and delayed-gratification dynamics while producing deterministic ladders of unbalanced semiprimes for both verification and blind challenges.
+This repository is a whitebox exploration of emergent problem-solving framed as integer factorization. Drawing on Levin et al. (2023) about decentralized “cell-view” sorting, we model factors as autonomous cells that rearrange themselves in an unreliable substrate, exhibit clustering, and occasionally step away from the goal before converging. A pure-Python Z5D prime predictor supplies unbalanced semiprime ladders (1:3 p:q bit ratio) that expose narrow search corridors; the engine measures how mixed algotypes, noise, and frozen cells influence convergence on both small and 127-bit challenges. The emphasis is explanatory, not cryptanalytic: we instrument the dynamics of emergence under controlled seeds and perturbations, then report DG (delayed gratification), aggregation (clustering), and sortedness as proxies for competence.
 
-## Method Deep Dive (Levin-inspired & novel elements)
-- **Distributed cell-view agents**: Each integer “cell” executes its algotype locally (bubble/selection variants), mirroring the paper’s bottom-up control with no omniscient coordinator.
-- **Unreliable substrate**: Frozen and immovable cells simulate damaged tissue; robustness is evaluated as the engine sorts despite execution failures.
-- **Chimeric populations & aggregation**: Mixed algotypes run together; the `aggregation` metric tracks spontaneous clustering, echoing chimeric arrays in the paper.
-- **Delayed-gratification detector**: `metrics.detect_dg` flags peak–valley–higher-peak episodes, quantifying the “step back to leap forward” competency highlighted by Levin et al.
-- **Goal tracking via sortedness**: `sortedness` measures local monotonicity as a proxy for reaching the anatomical target line (ordered axis), aligning with morphogenesis analogies.
-- **Deterministic yet perturbable experiments**: RNG seeds and ladder gates yield reproducible setups; perturbations (frozen cells, noisy candidates) reveal emergent resilience rather than baked-in shortcuts.
-- **Unbalanced semiprimes as stimuli**: The ladder builds 1:3 factor-ratio semiprimes where p ≪ √N, creating search corridors that reward intelligent navigation over brute-force symmetry.
-- **Prime supply chain**: `_simple_next_prime` uses the pure-Python Z5D predictor plus Miller–Rabin verification; tiny n fall back to trial division to stay robust when predictors are overkill.
+## Method Deep Dive (Levin-inspired synthesis)
+The engine instantiates Levin’s decentralization by assigning every integer “cell” a local algotype (bubble or selection variant) that decides swaps with only neighbor knowledge; no global controller exists. Hardware unreliability is explicit: frozen and immovable cells force the swarm to route around defects, stressing robustness. Chimeric populations mix algotypes in one lattice; the `aggregation` metric quantifies spontaneous clustering and segregation that mirrors the paper’s chimeric-array behaviors. Time-series analysis includes `detect_dg` to surface delayed-gratification episodes—temporary regressions that lead to higher later progress—and `sortedness` to score approach to the target anatomical line (ordered array). Factorization stimuli are unbalanced semiprimes, chosen because p ≪ √N makes naive corridor searches brittle, rewarding emergent navigation instead. The prime supply chain uses `_simple_next_prime`, which couples the pure-Python Z5D predictor with Miller–Rabin verification and a tiny-n fallback to keep correctness independent of predictor error. Experiments remain reproducible via fixed seeds and packaged ladders but are perturbable to reveal competencies rather than encode them.
 
 ## Ladders (Verification vs Challenge)
 - **Verification ladder**: `generate_verification_ladder()` (alias `generate_ladder()`) reveals p/q for regression and CI. Packaged at `src/cellview/data/validation_ladder.yaml`.
 - **Challenge ladder**: `generate_challenge_ladder()` withholds p/q (factors_revealed=False) but keeps identical Ns/seeds; packaged at `src/cellview/data/challenge_ladder.yaml`. Use it for blind factoring runs.
 - **YAML loader**: `load_ladder_yaml(kind="validation" | "challenge")` or pass a custom `path`. `print_ladder_summary(...)` auto-labels the ladder and redacts factors when appropriate.
+
+**Disclaimer**: This project is not a practical attack on deployed RSA and does not compete with GNFS-class algorithms; it is an experimental search/measurement harness on small and 127-bit test cases.
 
 ## Repository Layout
 - `src/cellview/` – engine, heuristics, utilities, CLI, experiments.
