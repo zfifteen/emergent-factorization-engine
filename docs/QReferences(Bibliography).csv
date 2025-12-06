@@ -1,0 +1,83 @@
+﻿[REF],DESCRIPTION,LINK
+1.1,"""The world depends on a collection of strange items. They're not cheap"" - Veritasium",The world depends on a collection of strange items. They're not cheap - YouTube
+1.2,"""Why Navy Enigma was Different w/ James Grime"" - Another Roof",Why Navy Enigma was Different w/ James Grime
+1.3,Bruce Schneier - Wikipedia,Bruce Schneier - Wikipedia
+1.4,Submission Requirements and Evaluation Criteria for the Post-Quantum Cryptography Standardization Process - NIST,call-for-proposals-final-dec-2016.pdf
+1.5,Post-Quantum RSA - Bernstein et al.,351.pdf
+1.6,NIST Post-Quantum Cryptography Standardization - Wikipedia,NIST Post-Quantum Cryptography Standardization - Wikipedia
+1.7,"The William Lowell Putnam Mathematical Competition, 1987 results",The William Lowell Putnam Mathematical Competition on JSTOR
+1.8,Curve25519: new Diffie-Hellman speed records - Daniel J. Bernstein,curve25519.dvi
+1.9,EFF at 25: Remembering the Case that Established Code as Speech,EFF at 25: Remembering the Case that Established Code as Speech | Electronic Frontier Foundation
+1.10,"DJB apparently coins the term ""post-quantum cryptography""",Has anyone really cracked anything recently?
+1.11,"""A Simple Provably Secure Key Exchange Scheme Based on the Learning with Errors Problem"" - Jintai Ding et al.",A Simple Provably Secure Key Exchange Scheme Based on the Learning with Errors Problem
+1.12,"""Multivariate Public Key Cryptosystems"" - Jintai Ding et al.",N/A
+1.13,"""New Cryptographic Systems Using Pairing with Errors"" - Jintai Ding",20150067336
+1.14,"""Experimenting with Post-Quantum Cryptography"" - Google Security Blog",Google Online Security Blog: Experimenting with Post-Quantum Cryptography
+1.15,"""CECPQ1 results"" - Adam Langley, ImperialViolet",ImperialViolet - CECPQ1 results
+1.16,"""Plagiarism as a patent amplifier"" - The cr.yp.to blog, Daniel J Bernstein",cr.yp.to: 2022.01.29: Plagiarism as a patent amplifier
+1.17,Round 1 Submissions - NIST,Post-Quantum Cryptography | CSRC
+2.1,Website of Lorenz Panny,Lorenz Panny
+2.2,Lorenz Panny's attack against Guess Again,Official Comment - Guess Again
+2.3,Lorenz Panny's paper refuting Guess Again's claims,1228.pdf
+2.4,Lorenz's attack against RVB,Official Comments - RVB
+2.5,Lorenz et al. vs RaCoss,Official Comments - RaCoSS
+2.6,"Yongge, later Gaborit, attack McNie",Official Comments - McNie
+2.7,"Couvreur, Lequesne, Tillich attack RLCE-KEM",Official Comments - RLCE-KEM
+2.8,"Barelli, Couvreur attack DAGS",Official Comments - DAGS
+2.9,"Tillich, Lequesne attack Edon-K",Official Comments - Edon-K
+2.10,"Tillich, Debris-Alazard attack RankSign",Official Comments - RankSign
+2.11,"Beullens, Castryck, Vercauteren attack Giophantus",Official Comments - Giophantus
+2.12,Attacks against Walnut,Official Comments - WalnutDSA
+2.13,Attacks against Compact LWE,Official Comments - Compact LWE
+2.14,Ducas and Yang Yu attack DRS,Official Comments - DRS
+2.15,Ron Steinfeld attacks CFPKM,Official Comments - CFPKM
+2.16,"Bo‐Yin Yang, Daniel J. Bernstein, Tanja Lange attack SRTPI",Official Comments - SRTPI
+2.17,"CBC 2019, Presentation discounting Big Quake among others - Ray Perlner",Perlner.pdf - Google Drive
+3.1,"""The Race to Harness Quantum Computing's Mind-Bending Power | The Future With Hannah Fry"" - Bloomberg Originals",The Race to Harness Quantum Computing's Mind-Bending Power | The Future With Hannah Fry
+4.1,Second Round Announcement - NIST,PQC Standardization Process: Second Round Candidate Announcement | CSRC
+4.2,Lyubashevsky and Schwabe attack qTesla,Official Comments (Round 2) - qTESLA
+4.3,Status Report on the Second Round of the NIST PQ-Cryptography Process,"IR 8309, Status Report on the Second Round of the NIST Post-Quantum Cryptography Standardization Process | CSRC"
+4.4,Kales and Zaverucha attack MQDSS,Official Comments (Round 2) - MQDSS
+4.5,"""On dual lattice attacks against small-secret LWE and parameter choices in HElib and SEAL"" - Martin R. Albrecht",83926497.pdf
+4.6,"""A Note on Parameter Choices of Round5"" - Yongha Son",949.pdf
+4.7,Attacks against LAC,Official Comments (Round 2) - LAC
+4.8,"""An Algebraic Attack on Rank Metric Code-Based Cryptosystems"" - Tillich et al.",An Algebraic Attack on Rank Metric Code-Based Cryptosystems | SpringerLink
+4.9,"""Cryptanalysis of The Lifted Unbalanced Oil Vinegar Signature Scheme"" - Jintai Ding et al.",1490.pdf
+4.10,Bernstein's official comments versus LEDAcrypt,Official Comments (Round 2) - LEDAcrypt
+4.11,"""Cryptanalysis of LEDAcrypt"" - Daniel Apon et al.",455.pdf
+4.12,"""How Quantum Computers Break Encryption | Shor's Algorithm Explained"" - minutephysics",How Quantum Computers Break Encryption | Shor's Algorithm Explained
+4.13,"""Exposing Why Quantum Computers Are Already A Threat"" - Veritasium",Exposing Why Quantum Computers Are Already A Threat
+5.1,"""The Mathematical Career of Pierre de Fermat"" - Michael Sean Mahoney, 2nd Ed, 1973",N/A
+5.2,"""Record-breaking quantum computer has more than 1000 qubits"" - NewScientist",Record-breaking quantum computer has more than 1000 qubits | New Scientist
+6.1,History of Round Three Updates - NIST,Round 3 Submission Website Updates
+6.2,"Attacks on, and defence of, SPHINCS+",Official Comments (Round 3) - SPHINCS+
+6.3,"""Improved Key Recovery of the HFEv- Signature Scheme"" - Jintai Ding et al.",1424.pdf
+6.4,"""Breaking Rainbow Takes a Weekend on a Laptop"" - Ward Beullens",214.pdf
+6.5,"Official Comments on Rainbow, Round 3",Official Comments (Round 3) - RAINBOW
+6.6,Status Report on the Third Round of the NIST PQ-Cryptography Process,Status Report on the Third Round of the NIST Post-Quantum Cryptography Standardization Process
+7.1,“SHA-256 | COMPLETE Step-By-Step Explanation (W/ Example)” - RedBlockBlue,SHA-256 | COMPLETE Step-By-Step Explanation (W/ Example)
+7.2,“A Very Bad Estimator (with Donald Knuth)” - Numberphile Podcast,A Very Bad Estimator (with Donald Knuth) - Numberphile Podcast
+7.3,"""Constructing Digital Signatures from a One Way Function"" - Article, Leslie Lamport",Constructing-Digital-Signatures-from-a-One-Way-Function.pdf
+7.4,"""Constructing Digital Signatures from a One Way Function"" - Leslie Lamport",Constructing Digital Signatures from a One Way Function - Microsoft Research
+7.5,"""Security, Authentication, and Public Key Systems"" - PhD Thesis, Ralph Charles Merkle",Thesis1979.pdf
+7.6,"""Joseph Anderson Vs No Man's Sky"" - Joseph Anderson",Joseph Anderson Vs No Man's Sky
+8.1,"Official Comments on CRYSTALS-KYBER, Round 3",Official Comments (Round 3) - CRYSTALS-KYBER
+8.2,"""World-leaders in Cryptography: Daniel J Bernstein"" - Bill Buchanan OBE",World-leaders in Cryptography: Daniel J Bernstein
+8.3,"OpenSSH 9.0 Changes, including the use of NTRU Prime",openssh.com/txt/release-9.0
+8.4,Jintai Ding licensed patent to NIST for the use of Kyber,Professor Jintai Ding - Xi'an Jiaotong-Liverpool University
+8.5,Team-CRYSTALS,CRYSTALS
+9.1,"""CRYSTALS-Kyber: Algorithm Specifications And Supporting Documentation"" - Team CRYSTALS",kyber-specification-round3-20210131.pdf
+9.2,"""CRYSTALS-Dilithium: Algorithm Specifications And Supporting Documentation"" - Team CRYSTALS",CRYSTALS-Dilithium
+9.3,"""Kyber and Dilithium"" - Video playlist, Cryptography 101",Short course on Kyber and Dilithium by Alfred Menezes
+10.1,FIPS 203: Module-Lattice-Based Key-Encapsulation Mechanism Standard (Kyber),Module-Lattice-Based Key-Encapsulation Mechanism Standard
+10.2,FIPS 204: Module-Lattice-Based Digital Signature Standard (Dilithium),Module-Lattice-Based Digital Signature Standard
+10.3,FIPS 205: Stateless Hash-Based Digital Signature Standard (SPHINCS+),Stateless Hash-Based Digital Signature Standard
+10.4,SIKE suffers attacks and leaves the contest,SIKE Foreword and Postscript
+10.5,pqc-forum: Request for feedback on Classic McEliece (Mike Hamburg),Request for feedback on Classic McEliece
+10.6,pqc-forum: Classic McEliece (John Mattsson),Classic McEliece
+10.7,Status Report on the Fourth Round of the NIST PQ-Cryptography Process,Status Report on the Fourth Round of the NIST Post-Quantum Cryptography Standardization Process
+10.8,"""Google Chrome Switches to ML-KEM for Post-Quantum Cryptography Defense"" - The Hacker News",Google Chrome Switches to ML-KEM for Post-Quantum Cryptography Defense
+10.9,"""Lightway upgrade: Integrating ML-KEM for post-quantum security"" - ExpressVPN",ExpressVPN: Early Adopter of ML-KEM for Quantum Encryption
+10.10,"""NIST's first post-quantum standards"" - Cloudflare Blog",NIST’s first post-quantum standards
+10.11,"""Man develops rare condition after ChatGPT query over stopping eating salt"" - The Guardian",Man develops rare condition after ChatGPT query over stopping eating salt | ChatGPT | The Guardian
+10.12,"""After COVID-19, is the world ready for the next pandemic?"" - Dr Tedros Adhanom Ghebreyesus","After COVID-19, is the world ready for the next pandemic?"
