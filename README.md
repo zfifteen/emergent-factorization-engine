@@ -15,6 +15,11 @@ This is not a practical competitor to GNFS / deployed RSA.
 
 **Disclaimer**: This project is not a practical attack on deployed RSA and does not compete with GNFS-class algorithms; it is an experimental search/measurement harness on small and 127-bit test cases.
 
+### Challenge ladder progress
+| Gate | N (decimal) | Status | Method | Factors (if solved) | Notes |
+| --- | --- | --- | --- | --- | --- |
+| G010 | 481 | ✅ solved | geofac + trial cert | 13 × 37 | Seed `1234abcd`, mode `validation`, samples 200 |
+
 ## Repository Layout
 - `src/cellview/` – engine, heuristics, utilities, CLI, experiments.
 - `src/cellview/utils/z5d_predictor/` – pure-Python Z5D nth-prime predictor (mpmath) feeding the ladder.
