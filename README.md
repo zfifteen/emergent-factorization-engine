@@ -23,6 +23,7 @@ This is not a practical competitor to GNFS / deployed RSA.
 | G030 | 420248809 | ✅ solved | geofac + trial cert | 73 × 5756833 | Seed `0x48` (ladder seed), mode `challenge`, dense window ±20500 around √N |
 | G040 | 702573045709 | ✅ solved | geofac + trial cert | 661 × 1062894169 | Seed `0x52` (ladder seed), mode `validation`, full [2..√N] domain (override allowed) |
 | G050 | 1014785524123363 | ✅ solved | geofac + trial cert | 3779 × 268532819297 | Seed `0x5c` (ladder seed), mode `challenge`, dense bands: 4000±4000 & √N±100000 |
+| G060 | 500658554493148229 | ✅ solved | geofac + trial cert | 21247 × 23563729208507 | Seed `0x66` (ladder seed), mode `challenge`, dense bands: 21247±500000 & √N±1000000 |
 
 ## Repository Layout
 - `src/cellview/` – engine, heuristics, utilities, CLI, experiments.
