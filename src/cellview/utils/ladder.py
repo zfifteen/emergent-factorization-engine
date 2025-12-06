@@ -199,7 +199,10 @@ def generate_unbalanced_semiprime(
         effective_bit_ratio = bit_ratio
     elif ratio is not None:
         effective_ratio = ratio
-        # Calculate bit_ratio from ratio for metadata (approximate)
+        # Calculate bit_ratio from ratio for metadata
+        # For ratio r, p gets r fraction of bits, q gets (1-r) fraction
+        # So q:p ratio = (1-r)/r. For 1:N notation where p:q = 1:N, we calculate N = (1-r)/r
+        # Example: ratio=0.25 → (1-0.25)/0.25 = 0.75/0.25 = 3 → 1:3 ratio
         effective_bit_ratio = int(round((1.0 - ratio) / ratio)) if ratio > 0 else BIT_RATIO_DEFAULT
     else:
         # Default to 1:3 ratio
