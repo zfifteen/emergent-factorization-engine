@@ -1,12 +1,13 @@
-# Bit Ratio Falsification Experiment
+# Bit Ratio Exploratory Analysis
 
-This experiment tests the hypothesis that larger bit ratios (1:4, 1:5 vs current 1:3) create more effective "narrow search corridors" for factorization.
+This exploratory analysis examines whether larger bit ratios (1:4, 1:5 vs current 1:3) create more effective "narrow search corridors" for factorization.
 
 ## Files
 
-- **`FINDINGS.md`** - Complete experimental findings with executive summary and detailed analysis
+- **`FINDINGS.md`** - Complete analysis with executive summary, limitations, and detailed results
 - **`experiment_runner.py`** - Python script to execute the experiment
 - **`experiment_results.json`** - Raw experimental data (JSON format)
+- **`visual_comparison.py`** - Visual demonstration tool
 
 ## Quick Start
 
@@ -20,7 +21,9 @@ python experiments/bit_ratio_falsification/experiment_runner.py
 
 **Hypothesis:** Larger bit ratios create narrower search corridors by making p smaller.
 
-**Result:** **HYPOTHESIS FALSIFIED** - Larger ratios make p smaller in absolute terms but do NOT create narrower corridors in relative terms. The relative position of p within the search space [2, √N] remains essentially constant (~4.7%) across all tested ratios.
+**Result:** **PRELIMINARY EVIDENCE AGAINST HYPOTHESIS** - This exploratory analysis suggests that larger ratios make p smaller in absolute terms but do NOT create observably narrower corridors in the tested relative position metrics. 
+
+**Important:** This is not a rigorous falsification. See FINDINGS.md for methodological limitations.
 
 ## Key Findings
 
@@ -31,9 +34,19 @@ python experiments/bit_ratio_falsification/experiment_runner.py
 | G130 p value | 3.66B (32 bits) | 57M (26 bits) | 1.79M (21 bits) |
 | Trial division burden (G130) | 3.66B | 57M | 1.79M |
 
-While p becomes exponentially smaller (2048x from 1:3 to 1:5), the relative search corridor width remains constant. This makes the problem easier via brute force, not more challenging.
+While p becomes exponentially smaller (2048x from 1:3 to 1:5), the measured relative position changes minimally.
 
-**Conclusion:** The current 1:3 ratio is appropriate. Larger ratios do not provide the hypothesized benefits.
+## Limitations
+
+This analysis has important methodological limitations:
+- No operational corridor metric (corridor width is inferred, not directly measured)
+- Confounding factors (bit-ratio entangled with Z5D predictor behavior)
+- No paired experiments with controlled Z5D conditions
+- No attack-model validation with concrete factorization procedure
+
+See FINDINGS.md "Methodological Limitations and Future Work" section for details.
+
+**Preliminary Conclusion:** Based on examined metrics, the current 1:3 ratio appears reasonable. A rigorous falsification would require the improvements outlined in FINDINGS.md.
 
 ## Reproducibility
 

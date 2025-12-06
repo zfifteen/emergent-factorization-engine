@@ -1,9 +1,9 @@
 # Task Completion Summary
 
-## Task: Falsify the Hypothesis about Larger Bit Ratios
+## Task: Exploratory Analysis of Larger Bit Ratios
 
 **Date:** 2025-12-06  
-**Status:** ✅ COMPLETE
+**Status:** ✅ COMPLETE (with acknowledged limitations)
 
 ---
 
@@ -30,11 +30,13 @@
   - Bit imbalance
 
 ### 3. Analysis & Documentation ✅
-- **Executive Summary:** Clear statement that hypothesis is FALSIFIED
-- **Detailed Analysis:** 318-line comprehensive findings document
+- **Executive Summary:** Preliminary evidence against hypothesis with clear limitations
+- **Detailed Analysis:** Comprehensive findings document with methodological critique
+- **Limitations Section:** Explicit acknowledgment of experimental constraints
+- **Future Work:** Roadmap for rigorous falsification
 - **Statistical Evidence:** Raw data in JSON format
 - **Visual Tools:** Comparison script for demonstration
-- **Quick Reference:** README with summary and instructions
+- **Quick Reference:** README with summary and caveats
 
 ### 4. Testing ✅
 - **Created** 14 new tests in `tests/test_bit_ratio.py`
@@ -44,21 +46,33 @@
 
 ---
 
-## Key Finding: HYPOTHESIS FALSIFIED ❌
+## Key Finding: PRELIMINARY EVIDENCE AGAINST HYPOTHESIS
 
 ### The Claim
 Larger bit ratios (1:4, 1:5) create "narrower search corridors" that stress robustness more effectively.
 
+### Important Caveat
+**This is an exploratory analysis, not a rigorous falsification.** The experiment has methodological limitations that prevent definitive conclusions.
+
 ### The Evidence
 - **Relative corridor position:** 4.74% → 4.58% → 4.57% (only 0.17pp change)
 - **Absolute p value (G130):** 3.66B → 57M → 1.79M (2048x reduction)
-- **Paradox:** While p shrinks exponentially, search space shrinks proportionally
-- **Result:** Relative corridor width stays constant - no new emergent phenomena
+- **Observation:** While p shrinks exponentially in absolute terms, measured relative position changes minimally
+- **Preliminary result:** No observable change in tested relative metrics
 
-### The Conclusion
-❌ Larger ratios do NOT create narrower corridors in relative terms  
-✅ Current 1:3 ratio is appropriate and should be maintained  
-❌ No compelling reason to adopt larger ratios
+### The Preliminary Conclusion
+Based on the metrics examined (with limitations noted in FINDINGS.md):
+- Larger ratios do NOT show evidence of creating narrower corridors in the tested relative position metrics
+- Current 1:3 ratio appears reasonable for the intended use case
+- A rigorous falsification would require the methodological improvements outlined in FINDINGS.md
+
+### Methodological Limitations
+1. No operational corridor metric (corridor width is inferred, not directly measured)
+2. Confounding factors (bit-ratio entangled with Z5D predictor behavior)
+3. No paired experiments with controlled Z5D conditions
+4. No attack-model validation with concrete factorization procedure
+
+See FINDINGS.md for detailed discussion and recommended improvements.
 
 ---
 

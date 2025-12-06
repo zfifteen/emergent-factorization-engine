@@ -1,4 +1,4 @@
-# Experimental Falsification of Larger Bit Ratio Hypothesis
+# Exploratory Analysis of Larger Bit Ratios in Semiprime Ladder Generation
 
 **Experiment Date:** 2025-12-06  
 **Repository:** zfifteen/emergent-factorization-engine  
@@ -8,9 +8,23 @@
 
 ## Executive Summary
 
-**HYPOTHESIS TESTED:** Larger bit ratios (1:4, 1:5 vs current 1:3) create narrower, more effective "search corridors" for factorization by making the smaller prime factor p even smaller relative to √N.
+**HYPOTHESIS EXPLORED:** Larger bit ratios (1:4, 1:5 vs current 1:3) create narrower, more effective "search corridors" for factorization by making the smaller prime factor p even smaller relative to √N.
 
-**RESULT:** **HYPOTHESIS FALSIFIED** - The experiment demonstrates that larger bit ratios do NOT create meaningfully narrower search corridors in relative terms, despite making p absolutely smaller.
+**RESULT:** **PRELIMINARY EVIDENCE AGAINST HYPOTHESIS** - This exploratory analysis suggests that larger bit ratios do NOT create meaningfully narrower search corridors in relative terms, despite making p absolutely smaller.
+
+### Important Limitations
+
+**This is an exploratory analysis, not a definitive falsification.** The experiment has several methodological limitations:
+
+1. **No operational corridor metric:** "Corridor width" is inferred from bit-length and magnitude behavior rather than directly measured (e.g., number of viable candidate p values in a Z5D band, or entropy of the posterior distribution over p)
+
+2. **Confounding factors:** The generator couples bit-ratio with Z5D predictor behavior, prime distribution, and bit-length adjustment loops in ways that are not fully disentangled across ratios
+
+3. **No paired experiments:** No controlled comparison where identical Z5D conditions are maintained across ratios
+
+4. **No attack-model validation:** No concrete Z5D-guided factorization procedure is tested; the analysis only examines structural properties of generated semiprimes
+
+**Scope of conclusion:** Given this ladder generator, this configuration, and these metrics, increasing the bit ratio from 1:3 to 1:4/1:5 does not produce observable changes in the measured relative position metrics. This provides preliminary evidence against the hypothesis but is not a rigorous falsification.
 
 ### Key Findings:
 
@@ -33,19 +47,18 @@
 
 4. **The Paradox:** While p becomes exponentially smaller in absolute terms (making trial division trivial), the **relative search corridor remains essentially unchanged**. The search space shrinks proportionally with p, maintaining the same relative difficulty.
 
-### Implications:
+### Preliminary Findings (Subject to Limitations Above):
 
-The hypothesis that larger bit ratios create "narrower search corridors" is **FALSE when measured relative to the search space**. While they do:
+This exploratory analysis observes that:
 - Make p easier to find via brute-force trial division (smaller absolute value)
 - Increase bit imbalance (46.8 bits average for 1:5 vs 35.2 for 1:3)
 - Reduce p's absolute magnitude dramatically
 
-They do **NOT**:
-- Create meaningfully narrower corridors in relative terms
-- Stress emergent search mechanisms differently in relative search space
-- Provide fundamentally different search topology
+But do **NOT** show evidence of:
+- Creating meaningfully narrower corridors in relative terms (as measured by relative position)
+- Meaningfully different search topology in the tested metrics
 
-**Conclusion:** Larger bit ratios (1:4, 1:5) do not provide the hypothesized benefits for testing emergent factorization. They simply make the problems easier via brute force while maintaining the same relative search structure. The current 1:3 ratio is appropriate and there is no compelling reason to adopt larger ratios for the challenge ladder.
+**Preliminary Conclusion:** Based on the metrics examined, larger bit ratios (1:4, 1:5) do not provide observable benefits for the specific ladder generation approach tested. The current 1:3 ratio appears reasonable for the intended use case. However, a rigorous falsification would require the methodological improvements outlined in the "Future Work" section below.
 
 ---
 
@@ -270,25 +283,96 @@ cat experiments/bit_ratio_falsification/experiment_results.json
 
 ---
 
+## Methodological Limitations and Future Work
+
+### Current Limitations
+
+This exploratory analysis has several important limitations that prevent it from being a rigorous falsification:
+
+1. **No Operational Corridor Metric**
+   - "Corridor width" is currently a narrative concept, not a measurable quantity
+   - The analysis infers corridor behavior from bit-length and magnitude, not from direct measurement
+   - **Needed:** A formal metric such as:
+     - Number of viable candidate p values in a Z5D band around √N that are prime and divide N
+     - Shannon entropy of the posterior distribution over p after applying Z5D guidance
+     - Quantitative measure of the "viable search region" under a specific attack model
+
+2. **Confounding Factors**
+   - Bit-ratio, Z5D predictor error, and prime distribution are entangled in the generator
+   - Different ratios may systematically sample different regions of the prime landscape
+   - The bit-length adjustment loop (rescaling target_q by 0.9/1.1) may behave differently across ratios
+   - **Needed:** Decouple bit-ratio from Z5D calibration by:
+     - Pre-computing fixed index ranges that keep Z5D error profile constant
+     - Avoiding per-ratio binary searches that land in different error regimes
+     - Using identical, deterministic adjustment procedures across ratios
+
+3. **No Paired Experiments**
+   - Current design only generates new ladders with different ratios
+   - No controlled comparison where Z5D conditions are held constant across ratios
+   - **Needed:** For each gate/seed, generate paired instances (1:3, 1:4, 1:5) where:
+     - N bit-lengths are matched (within 1 bit)
+     - Z5D index ranges for p and q are controlled
+     - All other parameters are identical
+
+4. **No Attack-Model Validation**
+   - Claims about "search corridors" implicitly reference an attack process
+   - No concrete Z5D-guided factorization procedure is tested
+   - Only structural properties of generated semiprimes are examined
+   - **Needed:** Implement and test an actual factorization procedure that:
+     - Uses Z5D guidance to navigate toward p
+     - Records number of evaluations, candidates checked, success probability
+     - Can be compared statistically across ratios under identical conditions
+
+### Recommended Future Work
+
+To make a rigorous falsification claim, the following improvements are needed:
+
+1. **Define and Instrument Corridor Width**
+   ```python
+   def measure_corridor_width(N, p, z5d_config):
+       """
+       Compute a quantitative corridor metric, e.g.:
+       - Number of Z5D-predicted candidates in band around sqrt(N)
+       - Entropy of posterior distribution over p
+       - Volume of viable search region
+       """
+       pass  # To be implemented
+   ```
+
+2. **Controlled Z5D Experiments**
+   - Calibrate Z5D independently for each bit size
+   - Map n ↔ bitlength(predict_prime(n)) and characterize error
+   - Generate p and q using fixed, precomputed index ranges
+   - Ensure identical Z5D behavior across all ratios
+
+3. **Explicit Attack Comparison**
+   - Implement a concrete Z5D-guided factorization procedure
+   - Run it on paired ladders (1:3 vs 1:4 vs 1:5) with identical conditions
+   - Record: iterations, evaluations, candidate checks, success rates
+   - Test statistically whether ratios affect these metrics
+
+4. **Scope Statement**
+   - Make explicit that conclusions are conditional on:
+     - This specific ladder generator
+     - This Z5D configuration
+     - This attack procedure
+     - These measured metrics
+
+### Current Value Despite Limitations
+
+While not a rigorous falsification, this exploratory analysis provides:
+- A working implementation of configurable bit ratios for future experiments
+- Baseline measurements showing that naive metrics don't vary much across ratios
+- A foundation for more rigorous experiments
+- Evidence that bit-ratio alone may not be the key variable of interest
+
+---
+
 ## Conclusion
 
-The hypothesis that larger bit ratios (1:4, 1:5) create more effective narrow search corridors is **conclusively falsified**. While larger ratios do make the smaller prime factor p exponentially smaller in absolute terms, they do not create meaningfully narrower corridors in relative terms. The relative position of p within the search space [2, √N] remains essentially constant across all tested ratios.
+This exploratory analysis provides **preliminary evidence** that larger bit ratios (1:4, 1:5) do not produce observable changes in the measured relative position metrics compared to the current 1:3 ratio. While not a rigorous falsification due to the methodological limitations outlined above, the findings suggest that adjusting bit ratios may not be the most promising direction for improving the challenge ladder.
 
-Furthermore, larger ratios have the opposite of the desired effect: they make factorization easier via brute force rather than more challenging. This defeats the purpose of using unbalanced semiprimes to test emergent search mechanisms.
-
-**Recommendation:** Maintain the current 1:3 bit ratio for the challenge ladder. It provides an appropriate balance between:
-- Sufficient imbalance to create interesting search corridors
-- Meaningful difficulty that requires sophisticated heuristics
-- Avoiding trivial brute-force solutions
-
-Future work should focus on other aspects of the emergent factorization engine:
-- Energy function design and calibration
-- Algotype mixing strategies
-- Defect/frozen cell placement and density
-- Corridor selection and refinement heuristics
-- Delayed gratification episode detection and exploitation
-
-These areas are more likely to yield insights into emergent problem-solving than adjusting the bit ratio parameter.
+**Preliminary Recommendation:** Maintain the current 1:3 bit ratio pending more rigorous experiments. The ratio appears reasonable for the intended use case.
 
 ---
 
