@@ -24,6 +24,14 @@ Research artifacts and tooling for the Emergence cell-view engine, reorganized i
 - **Pure-Python Z5D predictor** – The ladder generator calls `predict_nth_prime` (mpmath) and verifies outputs with Miller-Rabin for reproducible semiprime construction.
 - **Documentation-first experiments** – `docs/` includes the mission goal, implementation codex, METAcells proposal, simulation findings, and Z5D integration notes so you can understand the rationale without running anything first.
 
+## Levin et al. (2023) concepts applied
+- **Distributed “cell-view” sorting** – Arrays sort bottom-up: each element (cell) runs its algotype locally (bubble/selection variants), matching the paper’s decentralization and absence of a top-down controller.
+- **Unreliable substrate** – Frozen/immovable cells are supported to mirror damaged cells in the study; robustness is evaluated under these perturbations.
+- **Chimeric algotypes & aggregation** – Mixed algotypes in one run let us track clustering via the `aggregation` metric, reflecting the paper’s chimeric arrays and emergent grouping behaviors.
+- **Delayed gratification detector** – `metrics.detect_dg` scores peak–valley–higher-peak episodes, capturing the paper’s “move away to get closer later” competency.
+- **Goal-tracking via sortedness** – `sortedness` measures local monotonicity as the proxy for reaching the anatomical target line, aligning with the paper’s axis-order objective.
+- **Reproducible perturbation experiments** – Seeds and ladder gates give fixed scenarios to test how the decentralized system copes with errors, paralleling the paper’s emphasis on robustness and emergent competencies.
+
 ## Ladders: verification vs. challenge
 - Call `generate_verification_ladder()` (or legacy `generate_ladder()`) to get reproducible gates with `p`/`q` present. Used by tests and CI.
 - Call `generate_challenge_ladder()` for the blind set: same Ns, no factors retained, `factors_revealed=False` per gate. The packaged metadata is `src/cellview/data/challenge_ladder.yaml`.
