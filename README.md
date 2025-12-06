@@ -8,6 +8,9 @@ The engine instantiates Levin’s decentralization by assigning every integer �
 
 This is not a practical competitor to GNFS / deployed RSA.
 
+### Meta-Cell Corridor Mode (hierarchical Levin V2)
+For the 127-bit regime, dense ±50M bands around √N proved brittle. The meta-cell pipeline elevates Levin sorting: Stage 1 ranks *corridors* (ranges) by resonance energy estimated from sparse samples; Stage 2 expands only the top-ranked corridors into dense atomic cells for the usual Levin swaps and trial certification. This two-stage sort turns “guess the band” into “global sparse scan → local dense zoom,” preserving the geometry-first, arithmetic-last doctrine while keeping memory within guardrails.
+
 ## Ladders (Verification vs Challenge)
 - **Verification ladder**: `generate_verification_ladder()` (alias `generate_ladder()`) reveals p/q for regression and CI. Packaged at `src/cellview/data/validation_ladder.yaml`.
 - **Challenge ladder**: `generate_challenge_ladder()` withholds p/q (factors_revealed=False) but keeps identical Ns/seeds; packaged at `src/cellview/data/challenge_ladder.yaml`. Use it for blind factoring runs.
@@ -54,8 +57,9 @@ This is not a practical competitor to GNFS / deployed RSA.
 ## CLI in Brief
 - Entry: `python -m cellview.cli.run_cellview`
 - Modes: `--mode challenge` (canonical 127-bit N) or `--mode validation` with `--override-n` for small Ns.
-- Candidate domains: corridor/dense bands, validation full-domain, or file-based candidates.
+- Candidate domains: corridor/dense bands, validation full-domain, file-based candidates, or the new two-stage `--corridor-mode`.
+- Corridor meta-cells: `--corridor-mode --corridor-count 20000 --corridor-halfwidth 1000000 --corridor-samples 256 --corridor-topk 8 --corridor-agg p5 --corridor-range 1000000000:5000000000`
 - Outputs: JSON log with ranked candidates, DG/aggregation traces, certification results.
 
 ## Logs
-Written to `logs/` with run config, RNG seed, swap counts, metrics over time, ranked candidates, and certification payloads for audit or visualization.
+Written to `logs/` with run config, RNG seed, swap counts, metrics over time, ranked candidates, and certification payloads for audit or visualization. Corridor mode adds Stage-1 metadata: corridor window, energy aggregator, top-ranked corridors, and Levin swap counts for the corridor sort.

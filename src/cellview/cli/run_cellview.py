@@ -10,8 +10,15 @@ from typing import Dict
 
 from cellview.cert.certify import certify_top_m
 from cellview.engine.engine import CellViewEngine
-from cellview.heuristics.core import default_specs
+from cellview.heuristics.core import EnergySpec, default_specs, resolve_energy
 from cellview.utils import candidates as cand_utils
+from cellview.utils.corridors import (
+    default_range_for,
+    expand_corridors_to_candidates,
+    generate_corridors,
+    levin_sort_corridors,
+    score_corridor,
+)
 from cellview.utils.challenge import CHALLENGE
 from cellview.utils.logging import ensure_dir, timestamp_id, write_json
 from cellview.utils.rng import rng_from_hex
@@ -41,6 +48,36 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed-hex", type=str, help="Override seed hex")
     parser.add_argument("--candidates-file", type=str, help="Optional file with newline-separated candidates")
     parser.add_argument("--log-dir", type=str, default="logs", help="Directory to store JSON logs")
+
+    # Stage-1 meta-cell (corridor) mode
+    parser.add_argument("--corridor-mode", action="store_true", help="Two-stage corridor meta-cell pipeline")
+    parser.add_argument("--corridor-count", type=int, default=20_000, help="Number of coarse corridors to rank")
+    parser.add_argument(
+        "--corridor-halfwidth", type=int, default=1_000_000, help="Half-width of each corridor (integer radius)"
+    )
+    parser.add_argument(
+        "--corridor-samples",
+        type=int,
+        default=256,
+        help="Samples per corridor to estimate resonance energy",
+    )
+    parser.add_argument(
+        "--corridor-topk",
+        type=int,
+        default=8,
+        help="Top-ranked corridors to expand into dense candidates",
+    )
+    parser.add_argument(
+        "--corridor-agg",
+        type=str,
+        default="p5",
+        help="Energy aggregator for corridors: 'min' or percentile like 'p5'",
+    )
+    parser.add_argument(
+        "--corridor-range",
+        type=str,
+        help="Optional start:end for corridor centers (defaults to challenge-biased window or [2, sqrt(N)])",
+    )
     return parser.parse_args()
 
 
@@ -90,7 +127,71 @@ def main():
     energy_specs: Dict[str, any] = default_specs()
     rng = rng_from_hex(args.seed_hex)
 
-    candidates = load_candidates(args, N, rng)
+    stage1_corridor_info = None
+
+    if args.corridor_mode:
+        # Stage 1: corridor generation and ranking
+        range_start, range_end = default_range_for(
+            N,
+            *([int(x) for x in args.corridor_range.split(":")] if args.corridor_range else (None, None)),
+        )
+
+        corridors = generate_corridors(
+            range_start=range_start,
+            range_end=range_end,
+            half_width=args.corridor_halfwidth,
+            num_corridors=args.corridor_count,
+            rng=rng,
+        )
+
+        # Use the first algotype (or default) for corridor energy scoring
+        algo_key = algotypes[0] if algotypes else "dirichlet5"
+        energy_spec = energy_specs.get(algo_key) or default_specs().get(algo_key)
+        if energy_spec is None:
+            energy_fn = resolve_energy(algo_key)
+            energy_spec = EnergySpec(algo_key, energy_fn, {})
+            energy_specs[algo_key] = energy_spec
+
+        cache: Dict[tuple, any] = {}
+        for c in corridors:
+            score_corridor(
+                corridor=c,
+                N=N,
+                energy_spec=energy_spec,
+                samples=args.corridor_samples,
+                rng=rng,
+                aggregator=args.corridor_agg,
+                energy_cache=cache,
+            )
+
+        corridor_sort = levin_sort_corridors(corridors, max_steps=args.max_steps)
+        ranked_corridors = sorted(corridors, key=lambda c: c.energy)
+        top_corridors = ranked_corridors[: args.corridor_topk]
+
+        candidates = expand_corridors_to_candidates(top_corridors)
+
+        stage1_corridor_info = {
+            "range_start": range_start,
+            "range_end": range_end,
+            "corridor_count": len(corridors),
+            "corridor_halfwidth": args.corridor_halfwidth,
+            "corridor_samples": args.corridor_samples,
+            "corridor_agg": args.corridor_agg,
+            "top_corridor_count": len(top_corridors),
+            "top_corridors": [
+                {"center": c.center, "low": c.low, "high": c.high, "energy": str(c.energy)}
+                for c in top_corridors
+            ],
+            "levin_metrics": corridor_sort,
+        }
+
+        print(
+            f"Corridor mode: ranked {len(corridors)} corridors across [{range_start}, {range_end}] "
+            f"→ top {len(top_corridors)} expanded to {len(candidates)} candidates"
+        )
+    else:
+        candidates = load_candidates(args, N, rng)
+
     if args.mode == "challenge":
         cand_utils.guard_dense_domain_for_challenge(len(candidates), n=N)
 
@@ -115,6 +216,9 @@ def main():
         "results": run_results,
         "certification": cert_results,
     }
+
+    if stage1_corridor_info:
+        payload["stage1_corridors"] = stage1_corridor_info
 
     ensure_dir(args.log_dir)
     run_id = timestamp_id("run")
