@@ -18,7 +18,7 @@ This is not a practical competitor to GNFS / deployed RSA.
 ### Challenge ladder progress
 | Gate | N (decimal) | Status | Method | Factors (if solved) | Notes |
 | --- | --- | --- | --- | --- | --- |
-| G010 | 481 | ✅ solved | geofac + trial cert | 13 × 37 | Seed `1234abcd`, mode `validation`, samples 200 |
+| G010 | 481 | ✅ solved | geofac + trial cert | 13 × 37 | Seed `0x34` (ladder seed), mode `challenge`, full [2..√N] domain |
 
 ## Repository Layout
 - `src/cellview/` – engine, heuristics, utilities, CLI, experiments.
