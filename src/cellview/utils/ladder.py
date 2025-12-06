@@ -36,7 +36,8 @@ from .z5d_predictor import (
 
 # Canonical constants
 BASE_SEED = 42
-RATIO = 0.25  # small factor gets 25% of bits → 1:3 ratio
+RATIO = 0.25  # small factor gets 25% of bits → 1:3 ratio (backward compatible)
+BIT_RATIO_DEFAULT = 3  # Default 1:3 ratio (p:q bit ratio)
 CHALLENGE_N = 137524771864208156028430259349934309717
 CHALLENGE_BITS = 127
 
@@ -148,6 +149,7 @@ class GateSemiprime:
     q_bits: Optional[int] = None
     effective_seed: Optional[int] = None
     ratio: Optional[float] = None
+    bit_ratio: Optional[int] = None  # p:q bit ratio (e.g., 3 for 1:3, 4 for 1:4)
     sqrt_N: Optional[int] = None
     p_distance_from_sqrt: Optional[int] = None
     p_as_fraction_of_sqrt: Optional[float] = None
@@ -163,27 +165,49 @@ def get_effective_seed(base_seed: int, bit_size: int) -> int:
 def generate_unbalanced_semiprime(
     bit_size: int,
     seed: int,
-    ratio: float = RATIO,
+    ratio: float = None,
+    bit_ratio: int = None,
     reveal_factors: bool = True,
 ) -> GateSemiprime:
     """
     Generate an unbalanced semiprime of the specified bit size.
     
-    The small factor p gets ~ratio of the bits (default 25%).
+    The small factor p gets a fraction of the bits determined by either:
+    - ratio: Direct fraction (e.g., 0.25 = 25% of bits)
+    - bit_ratio: Integer ratio (e.g., 3 for 1:3, 4 for 1:4, 5 for 1:5)
+    
+    If bit_ratio is specified, it takes precedence over ratio.
     This places p well below √N, making it a non-trivial search target.
     
     Args:
         bit_size: Target bit length of N
         seed: RNG seed for reproducibility
         ratio: Fraction of bits for smaller factor (default 0.25 = 1:3 ratio)
+        bit_ratio: Integer p:q bit ratio (e.g., 3 for 1:3, 4 for 1:4, 5 for 1:5)
+                  Takes precedence over ratio if specified.
+        reveal_factors: Whether to reveal factors in the output
     
     Returns:
         GateSemiprime with all fields populated
     """
     rng = random.Random(seed)
     
+    # Determine the actual ratio to use
+    if bit_ratio is not None:
+        # Calculate ratio from bit_ratio: for 1:N ratio, p gets 1/(1+N) of bits
+        effective_ratio = 1.0 / (1.0 + bit_ratio)
+        effective_bit_ratio = bit_ratio
+    elif ratio is not None:
+        effective_ratio = ratio
+        # Calculate bit_ratio from ratio for metadata (approximate)
+        effective_bit_ratio = int(round((1.0 - ratio) / ratio)) if ratio > 0 else BIT_RATIO_DEFAULT
+    else:
+        # Default to 1:3 ratio
+        effective_ratio = RATIO
+        effective_bit_ratio = BIT_RATIO_DEFAULT
+    
     # Small factor p gets ~ratio of the bits
-    p_bits = max(4, int(bit_size * ratio))  # at least 4 bits for meaningful prime
+    p_bits = max(4, int(bit_size * effective_ratio))  # at least 4 bits for meaningful prime
     
     # Generate p (small factor)
     p_min = 1 << (p_bits - 1)  # ensure correct bit length
@@ -218,7 +242,8 @@ def generate_unbalanced_semiprime(
         p_bits=p.bit_length() if reveal_factors else None,
         q_bits=q.bit_length() if reveal_factors else None,
         effective_seed=seed,
-        ratio=ratio,
+        ratio=effective_ratio,
+        bit_ratio=effective_bit_ratio,
         sqrt_N=sqrt_N,
         p_distance_from_sqrt=sqrt_N - p if reveal_factors else None,
         p_as_fraction_of_sqrt=(p / sqrt_N) if (sqrt_N > 0 and reveal_factors) else None,
@@ -248,6 +273,7 @@ def _insert_g127(ladder: List[GateSemiprime]) -> List[GateSemiprime]:
         q_bits=None,
         effective_seed=None,
         ratio=None,
+        bit_ratio=None,
         sqrt_N=isqrt(CHALLENGE_N),
         p_distance_from_sqrt=None,
         p_as_fraction_of_sqrt=None,
@@ -260,14 +286,27 @@ def _insert_g127(ladder: List[GateSemiprime]) -> List[GateSemiprime]:
 
 def generate_verification_ladder(
     base_seed: int = BASE_SEED,
-    ratio: float = RATIO,
+    ratio: float = None,
+    bit_ratio: int = None,
 ) -> List[GateSemiprime]:
-    """Generate a ladder with factors revealed for regression/verification."""
+    """Generate a ladder with factors revealed for regression/verification.
+    
+    Args:
+        base_seed: Base RNG seed for reproducibility
+        ratio: Fraction of bits for smaller factor (default 0.25 = 1:3 ratio)
+        bit_ratio: Integer p:q bit ratio (e.g., 3 for 1:3, 4 for 1:4, 5 for 1:5)
+                  Takes precedence over ratio if specified.
+    
+    Returns:
+        List of GateSemiprime objects with factors revealed
+    """
     ladder = []
 
     for bits in range(10, 131, 10):
         effective_seed = get_effective_seed(base_seed, bits)
-        gate = generate_unbalanced_semiprime(bits, effective_seed, ratio, reveal_factors=True)
+        gate = generate_unbalanced_semiprime(
+            bits, effective_seed, ratio=ratio, bit_ratio=bit_ratio, reveal_factors=True
+        )
         ladder.append(gate)
 
     _insert_g127(ladder)
@@ -276,14 +315,27 @@ def generate_verification_ladder(
 
 def generate_challenge_ladder(
     base_seed: int = BASE_SEED,
-    ratio: float = RATIO,
+    ratio: float = None,
+    bit_ratio: int = None,
 ) -> List[GateSemiprime]:
-    """Generate a ladder with factors withheld (blind challenge set)."""
+    """Generate a ladder with factors withheld (blind challenge set).
+    
+    Args:
+        base_seed: Base RNG seed for reproducibility
+        ratio: Fraction of bits for smaller factor (default 0.25 = 1:3 ratio)
+        bit_ratio: Integer p:q bit ratio (e.g., 3 for 1:3, 4 for 1:4, 5 for 1:5)
+                  Takes precedence over ratio if specified.
+    
+    Returns:
+        List of GateSemiprime objects with factors withheld
+    """
     ladder = []
 
     for bits in range(10, 131, 10):
         effective_seed = get_effective_seed(base_seed, bits)
-        gate = generate_unbalanced_semiprime(bits, effective_seed, ratio, reveal_factors=False)
+        gate = generate_unbalanced_semiprime(
+            bits, effective_seed, ratio=ratio, bit_ratio=bit_ratio, reveal_factors=False
+        )
         ladder.append(gate)
 
     _insert_g127(ladder)
@@ -293,9 +345,21 @@ def generate_challenge_ladder(
 # Backward-compatible alias: verification ladder remains the default
 def generate_ladder(
     base_seed: int = BASE_SEED,
-    ratio: float = RATIO,
+    ratio: float = None,
+    bit_ratio: int = None,
 ) -> List[GateSemiprime]:
-    return generate_verification_ladder(base_seed=base_seed, ratio=ratio)
+    """Backward-compatible alias for generate_verification_ladder.
+    
+    Args:
+        base_seed: Base RNG seed for reproducibility
+        ratio: Fraction of bits for smaller factor (default 0.25 = 1:3 ratio)
+        bit_ratio: Integer p:q bit ratio (e.g., 3 for 1:3, 4 for 1:4, 5 for 1:5)
+                  Takes precedence over ratio if specified.
+    
+    Returns:
+        List of GateSemiprime objects with factors revealed
+    """
+    return generate_verification_ladder(base_seed=base_seed, ratio=ratio, bit_ratio=bit_ratio)
 
 
 VALIDATION_LADDER_YAML = "validation_ladder.yaml"
@@ -361,8 +425,15 @@ def print_ladder_summary(
         hidden = all(not g.factors_revealed for g in non_challenge_gates)
         label = "CHALLENGE" if hidden else "VERIFICATION"
 
+    # Determine the bit ratio for the header
+    bit_ratio_str = "1:3"  # default
+    for g in ladder:
+        if g.bit_ratio is not None and g.gate != "G127":
+            bit_ratio_str = f"1:{g.bit_ratio}"
+            break
+
     print("=" * 100)
-    print(f"{label.upper()} LADDER: Unbalanced Semiprimes (Base Seed: 42, Ratio: 1:3)")
+    print(f"{label.upper()} LADDER: Unbalanced Semiprimes (Base Seed: 42, Ratio: {bit_ratio_str})")
     print("=" * 100)
     print(f"{'Gate':<6} {'Bits':<6} {'p bits':<8} {'q bits':<8} {'p/√N':<12} {'p':>24}")
     print("-" * 100)
