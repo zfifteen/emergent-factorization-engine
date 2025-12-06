@@ -206,6 +206,24 @@ class TestGateRetrieval(unittest.TestCase):
         self.assertEqual(gate.target_bits, 50)
 
 
+class TestLadderReporting(unittest.TestCase):
+    """Produce a human-readable ladder report for verbose test runs."""
+
+    def test_ladder_verbose_report(self):
+        """Print each gate’s parameters so the ladder evaluation is visible."""
+        ladder = generate_ladder()
+        print("\nVALIDATION LADDER REPORT")
+        print("-" * 70)
+        for gate in ladder:
+            factors = f"{gate.p} * {gate.q}" if gate.p and gate.q else "unknown (G127 challenge)"
+            print(
+                f"{gate.gate:4} | target {gate.target_bits:3d} bits | "
+                f"p_bits {gate.p_bits or '?':>3} | q_bits {gate.q_bits or '?':>3} | "
+                f"p/√N {gate.p_as_fraction_of_sqrt or '?':>6} | factors {factors}"
+            )
+        print("-" * 70)
+
+
 class TestYAMLLoading(unittest.TestCase):
     """Test YAML configuration loading."""
     
