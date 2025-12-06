@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Validation Ladder Generator for Cell-View Factor Morphospace.
+Ladder Generator for Cell-View Factor Morphospace.
 
-Generates UNBALANCED semiprimes with a 1:3 factor ratio.
+Generates UNBALANCED semiprimes with a 1:3 factor ratio (p gets ~25% of bits).
 Uses base seed 42 with per-gate derivation for reproducibility.
 
-Unbalanced semiprimes are harder than balanced ones because
-the small factor p is far below √N, not clustered near it.
+Two modes:
+    - Verification ladder: factors revealed for regression/testing (default via generate_ladder).
+    - Challenge ladder: same Ns, but p/q are withheld (factors_revealed=False) for blind challenges.
 
 Prime Generation:
     Uses a pure-Python Z5D predictor implementation (mpmath-powered).
@@ -17,7 +18,7 @@ Prime Generation:
 import random
 import json
 import yaml
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, asdict
 from typing import Optional, List, Dict, Any, Union
 from pathlib import Path
 from importlib import resources
@@ -136,7 +137,7 @@ def _is_prime(n: int) -> bool:
 
 @dataclass
 class GateSemiprime:
-    """Represents a single gate in the validation ladder."""
+    """Represents a single gate in a ladder."""
     gate: str
     target_bits: int
     actual_bits: Optional[int] = None
@@ -151,6 +152,7 @@ class GateSemiprime:
     p_distance_from_sqrt: Optional[int] = None
     p_as_fraction_of_sqrt: Optional[float] = None
     note: Optional[str] = None
+    factors_revealed: bool = True
 
 
 def get_effective_seed(base_seed: int, bit_size: int) -> int:
@@ -159,9 +161,10 @@ def get_effective_seed(base_seed: int, bit_size: int) -> int:
 
 
 def generate_unbalanced_semiprime(
-    bit_size: int, 
-    seed: int, 
-    ratio: float = RATIO
+    bit_size: int,
+    seed: int,
+    ratio: float = RATIO,
+    reveal_factors: bool = True,
 ) -> GateSemiprime:
     """
     Generate an unbalanced semiprime of the specified bit size.
@@ -205,43 +208,34 @@ def generate_unbalanced_semiprime(
     N = p * q
     sqrt_N = isqrt(N)
     
-    return GateSemiprime(
+    gate = GateSemiprime(
         gate=f"G{bit_size:03d}",
         target_bits=bit_size,
         actual_bits=N.bit_length(),
         N=N,
-        p=p,
-        q=q,
-        p_bits=p.bit_length(),
-        q_bits=q.bit_length(),
+        p=p if reveal_factors else None,
+        q=q if reveal_factors else None,
+        p_bits=p.bit_length() if reveal_factors else None,
+        q_bits=q.bit_length() if reveal_factors else None,
         effective_seed=seed,
         ratio=ratio,
         sqrt_N=sqrt_N,
-        p_distance_from_sqrt=sqrt_N - p,
-        p_as_fraction_of_sqrt=round(p / sqrt_N, 6) if sqrt_N > 0 else None,
+        p_distance_from_sqrt=sqrt_N - p if reveal_factors else None,
+        p_as_fraction_of_sqrt=(p / sqrt_N) if (sqrt_N > 0 and reveal_factors) else None,
+        note=None if reveal_factors else "Factors withheld (challenge ladder)",
+        factors_revealed=reveal_factors,
     )
 
+    # Actively scrub prime values when factors are withheld to avoid accidental reuse
+    if not reveal_factors:
+        p = None
+        q = None
 
-def generate_ladder(
-    base_seed: int = BASE_SEED, 
-    ratio: float = RATIO
-) -> List[GateSemiprime]:
-    """
-    Generate the full validation ladder from 10 to 130 bits.
-    G127 is the canonical challenge (not generated, factors unknown).
-    
-    Returns:
-        List of GateSemiprime objects in ascending bit order
-    """
-    ladder = []
-    
-    # Generate gates from 10 to 130 in increments of 10
-    for bits in range(10, 131, 10):
-        effective_seed = get_effective_seed(base_seed, bits)
-        gate = generate_unbalanced_semiprime(bits, effective_seed, ratio)
-        ladder.append(gate)
-    
-    # Insert G127 (canonical challenge, factors unknown)
+    return gate
+
+
+def _insert_g127(ladder: List[GateSemiprime]) -> List[GateSemiprime]:
+    """Insert the canonical challenge gate (factors withheld) into a ladder list."""
     g127_idx = next(i for i, g in enumerate(ladder) if g.target_bits > 127)
     g127 = GateSemiprime(
         gate="G127",
@@ -257,28 +251,74 @@ def generate_ladder(
         sqrt_N=isqrt(CHALLENGE_N),
         p_distance_from_sqrt=None,
         p_as_fraction_of_sqrt=None,
-        note="Canonical challenge - factors unknown"
+        note="Canonical challenge - factors unknown",
+        factors_revealed=False,
     )
     ladder.insert(g127_idx, g127)
-    
     return ladder
 
 
+def generate_verification_ladder(
+    base_seed: int = BASE_SEED,
+    ratio: float = RATIO,
+) -> List[GateSemiprime]:
+    """Generate a ladder with factors revealed for regression/verification."""
+    ladder = []
+
+    for bits in range(10, 131, 10):
+        effective_seed = get_effective_seed(base_seed, bits)
+        gate = generate_unbalanced_semiprime(bits, effective_seed, ratio, reveal_factors=True)
+        ladder.append(gate)
+
+    _insert_g127(ladder)
+    return ladder
+
+
+def generate_challenge_ladder(
+    base_seed: int = BASE_SEED,
+    ratio: float = RATIO,
+) -> List[GateSemiprime]:
+    """Generate a ladder with factors withheld (blind challenge set)."""
+    ladder = []
+
+    for bits in range(10, 131, 10):
+        effective_seed = get_effective_seed(base_seed, bits)
+        gate = generate_unbalanced_semiprime(bits, effective_seed, ratio, reveal_factors=False)
+        ladder.append(gate)
+
+    _insert_g127(ladder)
+    return ladder
+
+
+# Backward-compatible alias: verification ladder remains the default
+def generate_ladder(
+    base_seed: int = BASE_SEED,
+    ratio: float = RATIO,
+) -> List[GateSemiprime]:
+    return generate_verification_ladder(base_seed=base_seed, ratio=ratio)
+
+
 VALIDATION_LADDER_YAML = "validation_ladder.yaml"
+CHALLENGE_LADDER_YAML = "challenge_ladder.yaml"
 
 
-def load_ladder_yaml(path: Union[str, Path] = None) -> Dict[str, Any]:
+def load_ladder_yaml(path: Union[str, Path] = None, kind: str = "validation") -> Dict[str, Any]:
     """
-    Load the validation ladder from YAML file.
+    Load a ladder definition from YAML.
     
     Args:
-        path: Path to YAML file (default: packaged cellview data asset)
+        path: Explicit path override (skips packaged selection)
+        kind: "validation" (default) or "challenge" when using packaged assets
     
     Returns:
         Parsed YAML as dictionary
     """
+    if path is None and kind not in {"validation", "challenge"}:
+        raise ValueError("kind must be 'validation' or 'challenge'")
+
     if path is None:
-        resource = resources.files("cellview.data") / VALIDATION_LADDER_YAML
+        filename = VALIDATION_LADDER_YAML if kind == "validation" else CHALLENGE_LADDER_YAML
+        resource = resources.files("cellview.data") / filename
         contents = resource.read_text(encoding="utf-8")
         return yaml.safe_load(contents)
     
@@ -307,24 +347,31 @@ def get_gate(gate_name: str, ladder: List[GateSemiprime] = None) -> Optional[Gat
     return None
 
 
-def print_ladder_summary(ladder: List[GateSemiprime] = None) -> None:
+def print_ladder_summary(ladder: List[GateSemiprime] = None, label: str = None) -> None:
     """Print a human-readable summary of the ladder."""
     if ladder is None:
         ladder = generate_ladder()
-    
+
+    if label is None:
+        # If every non-G127 gate hides factors, call it the challenge ladder
+        non_challenge_gates = [g for g in ladder if g.gate != "G127"]
+        hidden = all(not g.factors_revealed for g in non_challenge_gates)
+        label = "CHALLENGE" if hidden else "VERIFICATION"
+
     print("=" * 100)
-    print("VALIDATION LADDER: Unbalanced Semiprimes (Base Seed: 42, Ratio: 1:3)")
+    print(f"{label.upper()} LADDER: Unbalanced Semiprimes (Base Seed: 42, Ratio: 1:3)")
     print("=" * 100)
     print(f"{'Gate':<6} {'Bits':<6} {'p bits':<8} {'q bits':<8} {'p/√N':<12} {'p':>24}")
     print("-" * 100)
-    
+
     for g in ladder:
         if g.p is None:
-            print(f"{g.gate:<6} {g.target_bits:<6} {'?':<8} {'?':<8} {'?':<12} {'[CHALLENGE]':>24}")
+            marker = "[CHALLENGE]" if g.gate == "G127" else "[WITHHELD]"
+            print(f"{g.gate:<6} {g.target_bits:<6} {'?':<8} {'?':<8} {'?':<12} {marker:>24}")
         else:
             print(f"{g.gate:<6} {g.actual_bits:<6} {g.p_bits:<8} {g.q_bits:<8} "
                   f"{g.p_as_fraction_of_sqrt:<12.6f} {g.p:>24}")
-    
+
     print("=" * 100)
 
 

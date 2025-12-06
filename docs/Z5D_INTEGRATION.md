@@ -2,7 +2,7 @@
 
 ## Overview
 
-The validation ladder now ships a **pure-Python Z5D predictor** powered by `mpmath`. It solves Riemann's
+The ladder now ships a **pure-Python Z5D predictor** powered by `mpmath`. It solves Riemann's
 prime-counting function to estimate the nth prime and falls back to Miller-Rabin verification for safety.
 
 ## Architecture
@@ -23,8 +23,10 @@ ladder.py → z5d_predictor (pure-Python)
 
 ### Automatic (Recommended)
 
-`generate_ladder()` internally calls `_simple_next_prime`, which estimates primes via the predictor and
-then verifies them with Miller-Rabin. No further action is required.
+`generate_verification_ladder()` (or the legacy alias `generate_ladder()`) internally calls `_simple_next_prime`, which estimates primes via the predictor and then verifies them with Miller-Rabin. No further action is required.
+
+Need a factor-free challenge set? Use `generate_challenge_ladder()`, which emits the same Ns but with `p/q`
+redacted (`factors_revealed=False`). Packaged YAML loaders mirror this split via `load_ladder_yaml(kind="validation"|"challenge")`.
 
 ### Manual Control
 

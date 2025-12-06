@@ -20,4 +20,4 @@ where = ["src"]
 include = ["cellview*"]
 
 [tool.setuptools.package-data]
-"cellview.data" = ["validation_ladder.yaml"]
+"cellview.data" = ["validation_ladder.yaml", "challenge_ladder.yaml"]

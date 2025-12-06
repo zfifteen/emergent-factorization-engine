@@ -1,0 +1,81 @@
+# Challenge Ladder for Cell-View Factor Morphospace
+# UNBALANCED semiprimes (ratio ~1:3) with base seed 42
+# Factors are intentionally withheld; only N is published.
+
+mode: challenge
+base_seed: 42
+ratio: 0.25  # small factor gets ~25% of the bits (1:3 ratio)
+note: "Blind challenge set; use validation ladder for regression with factors."
+
+ladder:
+  - gate: G010
+    bits: 10
+    effective_seed: 52
+    N: 481
+    factors_revealed: false
+  - gate: G020
+    bits: 20
+    effective_seed: 62
+    N: 426397
+    factors_revealed: false
+  - gate: G030
+    bits: 30
+    effective_seed: 72
+    N: 420248809
+    factors_revealed: false
+  - gate: G040
+    bits: 40
+    effective_seed: 82
+    N: 702573045709
+    factors_revealed: false
+  - gate: G050
+    bits: 50
+    effective_seed: 92
+    N: 1014785524123363
+    factors_revealed: false
+  - gate: G060
+    bits: 60
+    effective_seed: 102
+    N: 500658554493148229
+    factors_revealed: false
+  - gate: G070
+    bits: 70
+    effective_seed: 112
+    N: 767653111049213360681
+    factors_revealed: false
+  - gate: G080
+    bits: 80
+    effective_seed: 122
+    N: 492219455737419456882133
+    factors_revealed: false
+  - gate: G090
+    bits: 90
+    effective_seed: 132
+    N: 593553437347811388606902251
+    factors_revealed: false
+  - gate: G100
+    bits: 100
+    effective_seed: 142
+    N: 982715851165666440656268686057
+    factors_revealed: false
+  - gate: G110
+    bits: 110
+    effective_seed: 152
+    N: 1020504234958985260634362199176283
+    factors_revealed: false
+  - gate: G120
+    bits: 120
+    effective_seed: 162
+    N: 517024067529429379830492946976698987
+    factors_revealed: false
+  - gate: G127
+    bits: 127
+    effective_seed: null
+    N: 137524771864208156028430259349934309717
+    note: "Canonical challenge - factors unknown"
+    factors_revealed: false
+  - gate: G130
+    bits: 130
+    effective_seed: 172
+    N: 1033209243977482520466079555757540526427
+    factors_revealed: false

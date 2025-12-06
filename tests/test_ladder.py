@@ -2,6 +2,8 @@ import unittest
 from pathlib import Path
 from cellview.utils.ladder import (
     generate_ladder,
+    generate_verification_ladder,
+    generate_challenge_ladder,
     generate_unbalanced_semiprime,
     get_effective_seed,
     get_gate,
@@ -114,7 +116,7 @@ class TestLadderGeneration(unittest.TestCase):
     
     def test_ladder_length(self):
         """Test that ladder has correct number of gates."""
-        ladder = generate_ladder()
+        ladder = generate_verification_ladder()
         
         # Should have gates for 10, 20, 30, ..., 120, 127, 130
         # That's 12 gates from 10-120 (step 10) + 1 for 127 + 1 for 130 = 14 total
@@ -122,7 +124,7 @@ class TestLadderGeneration(unittest.TestCase):
     
     def test_ladder_ordering(self):
         """Test that gates are in ascending bit order."""
-        ladder = generate_ladder()
+        ladder = generate_verification_ladder()
         
         for i in range(len(ladder) - 1):
             self.assertLessEqual(
@@ -133,7 +135,7 @@ class TestLadderGeneration(unittest.TestCase):
     
     def test_g127_is_challenge(self):
         """Test that G127 is the canonical challenge."""
-        ladder = generate_ladder()
+        ladder = generate_verification_ladder()
         
         g127 = next(g for g in ladder if g.gate == "G127")
         
@@ -147,7 +149,7 @@ class TestLadderGeneration(unittest.TestCase):
     
     def test_all_gates_present(self):
         """Test that all expected gates are present."""
-        ladder = generate_ladder()
+        ladder = generate_verification_ladder()
         gate_names = [g.gate for g in ladder]
         
         expected_gates = [
@@ -160,7 +162,7 @@ class TestLadderGeneration(unittest.TestCase):
     
     def test_generated_gates_have_factors(self):
         """Test that generated gates (not G127) have factors."""
-        ladder = generate_ladder()
+        ladder = generate_verification_ladder()
         
         for gate in ladder:
             if gate.gate == "G127":
@@ -211,17 +213,52 @@ class TestLadderReporting(unittest.TestCase):
 
     def test_ladder_verbose_report(self):
         """Print each gate’s parameters so the ladder evaluation is visible."""
-        ladder = generate_ladder()
+        ladder = generate_verification_ladder()
         print("\nVALIDATION LADDER REPORT")
         print("-" * 70)
         for gate in ladder:
             factors = f"{gate.p} * {gate.q}" if gate.p and gate.q else "unknown (G127 challenge)"
+            p_over_sqrt = f"{gate.p_as_fraction_of_sqrt:.6g}" if gate.p_as_fraction_of_sqrt is not None else "?"
             print(
                 f"{gate.gate:4} | target {gate.target_bits:3d} bits | "
                 f"p_bits {gate.p_bits or '?':>3} | q_bits {gate.q_bits or '?':>3} | "
-                f"p/√N {gate.p_as_fraction_of_sqrt or '?':>6} | factors {factors}"
+                f"p/√N {p_over_sqrt:>6} | factors {factors}"
             )
         print("-" * 70)
+
+        challenge_ladder = generate_challenge_ladder()
+        print("\nCHALLENGE LADDER REPORT (factors withheld)")
+        print("-" * 70)
+        for gate in challenge_ladder:
+            factors = "withheld"
+            p_over_sqrt = f"{gate.p_as_fraction_of_sqrt:.6g}" if gate.p_as_fraction_of_sqrt is not None else "?"
+            print(
+                f"{gate.gate:4} | target {gate.target_bits:3d} bits | "
+                f"p_bits {gate.p_bits or '?':>3} | q_bits {gate.q_bits or '?':>3} | "
+                f"p/√N {p_over_sqrt:>6} | factors {factors}"
+            )
+        print("-" * 70)
+
+
+class TestChallengeLadder(unittest.TestCase):
+    """Ensure the challenge ladder never exposes factors."""
+
+    def test_challenge_ladder_hides_factors(self):
+        ladder = generate_challenge_ladder()
+
+        self.assertEqual(len(ladder), 14)
+        for gate in ladder:
+            self.assertFalse(gate.factors_revealed)
+            self.assertIsNone(gate.p)
+            self.assertIsNone(gate.q)
+            self.assertIsNone(gate.p_bits)
+            self.assertIsNone(gate.q_bits)
+            self.assertIsNone(gate.p_distance_from_sqrt)
+            self.assertIsNone(gate.p_as_fraction_of_sqrt)
+
+        g127 = next(g for g in ladder if g.gate == "G127")
+        self.assertEqual(g127.N, CHALLENGE_N)
+        self.assertIsNone(g127.effective_seed)
 
 
 class TestYAMLLoading(unittest.TestCase):
@@ -275,6 +312,23 @@ class TestYAMLLoading(unittest.TestCase):
         self.assertIn("pass_criteria", progression)
         self.assertIn("time_budgets", progression)
         self.assertIn("top_m_for_certification", progression)
+
+    def test_load_challenge_yaml(self):
+        """Challenge YAML should exist and omit factors."""
+        config = load_ladder_yaml(kind="challenge")
+
+        self.assertEqual(config.get("mode"), "challenge")
+        self.assertEqual(config.get("base_seed"), BASE_SEED)
+        self.assertEqual(config.get("ratio"), RATIO)
+
+        gate_names = [g["gate"] for g in config["ladder"]]
+        self.assertIn("G127", gate_names)
+
+        for gate in config["ladder"]:
+            self.assertIn("N", gate)
+            self.assertNotIn("p", gate)
+            self.assertNotIn("q", gate)
+            self.assertFalse(gate.get("factors_revealed", True))
 
 
 if __name__ == '__main__':
