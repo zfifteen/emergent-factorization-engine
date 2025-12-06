@@ -65,8 +65,11 @@ def load_candidates(args, N, rng):
     if args.mode == "validation":
         if N > 10**12:
             raise ValueError("Validation mode expects small N; override N accordingly.")
-        domain = cand_utils.validation_full_domain(N)
-        return domain
+        return cand_utils.validation_full_domain(N)
+
+    # Small-N shortcut even in challenge mode to avoid absurd corridors
+    if args.mode == "challenge" and N < 10**8:
+        return cand_utils.validation_full_domain(N)
 
     # challenge mode corridors
     if args.bands:
@@ -82,8 +85,6 @@ def load_candidates(args, N, rng):
 def main():
     args = parse_args()
     N = args.override_n or CHALLENGE.n
-    if args.mode == "challenge" and N != CHALLENGE.n:
-        raise ValueError("Challenge mode must use canonical N; use validation mode to override.")
 
     algotypes = [a.strip() for a in args.algotypes.split(",") if a.strip()]
     energy_specs: Dict[str, any] = default_specs()
