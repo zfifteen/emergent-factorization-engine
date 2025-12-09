@@ -25,8 +25,6 @@ import json
 import sys
 from pathlib import Path
 from typing import List, Dict, Any
-from dataclasses import asdict
-from math import isqrt
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -35,8 +33,6 @@ from cellview.utils.ladder import (
     generate_verification_ladder,
     GateSemiprime,
     BASE_SEED,
-    BIT_RATIO_DEFAULT,
-    _is_prime,
 )
 
 

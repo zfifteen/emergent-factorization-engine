@@ -138,24 +138,28 @@ All results are deterministic (same seed = same output).
 - Documented experimental methodology
 
 ### For the Hypothesis
-- Definitively falsified with statistical evidence
-- Clear recommendation: maintain 1:3 ratio
-- Mathematical explanation provided
-- No action needed on larger ratios
+- Preliminary evidence suggests larger ratios don't narrow corridors in measured metrics
+- Recommendation: maintain 1:3 ratio pending more rigorous experiments
+- Mathematical explanation provided for proportional scaling
+- Further investigation needed with operational corridor metrics
 
 ### For Future Work
-Focus should be on:
+To achieve rigorous falsification:
+- Define operational corridor metric (Z5D band analysis, entropy)
+- Decouple bit-ratio from Z5D calibration
+- Implement paired experiments with controlled conditions
+- Test concrete attack model with complexity comparison
+
+Other promising areas:
 - Energy function design
 - Algotype mixing strategies
 - Defect/frozen cell placement
 - Corridor selection heuristics
 
-NOT on adjusting bit ratios (falsified).
-
 ---
 
 ## Summary
 
-This task successfully implemented, executed, and documented a comprehensive experiment that conclusively falsifies the hypothesis about larger bit ratios. All deliverables are complete, tested, and reproducible. The findings provide clear guidance that the current 1:3 ratio is appropriate and should be maintained.
+This task successfully implemented configurable bit ratios and conducted an exploratory analysis. The preliminary findings suggest larger bit ratios don't produce observable changes in measured relative position metrics, but methodological limitations prevent definitive conclusions. All deliverables are complete, tested, and reproducible. The implementation provides a foundation for future rigorous experiments.
 
 **Status: COMPLETE ✅**
