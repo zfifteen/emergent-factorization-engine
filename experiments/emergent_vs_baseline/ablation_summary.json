@@ -1,0 +1,41 @@
+{
+  "experiment_config": {
+    "gates": [
+      "G100",
+      "G110",
+      "G120"
+    ],
+    "half_width": 5000,
+    "max_steps": 20,
+    "output_dir": "tests/logs"
+  },
+  "gate_results": {
+    "G100": {
+      "baseline_rank": 102,
+      "emergent_rank": 1,
+      "rank_delta": 101,
+      "baseline_entropy": 0.9978697612200633,
+      "emergent_entropy": 2.6672159706275848e-05,
+      "baseline_viable": 53,
+      "emergent_viable": 52
+    },
+    "G110": {
+      "baseline_rank": 102,
+      "emergent_rank": 1,
+      "rank_delta": 101,
+      "baseline_entropy": 0.9978697612200633,
+      "emergent_entropy": 3.8231190416287217e-07,
+      "baseline_viable": 53,
+      "emergent_viable": 52
+    },
+    "G120": {
+      "baseline_rank": 102,
+      "emergent_rank": 1,
+      "rank_delta": 101,
+      "baseline_entropy": 0.9978697612200633,
+      "emergent_entropy": 6.176577672017513e-08,
+      "baseline_viable": 53,
+      "emergent_viable": 52
+    }
+  }
+}

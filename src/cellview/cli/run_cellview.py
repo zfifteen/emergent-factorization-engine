@@ -25,12 +25,29 @@ from cellview.utils.rng import rng_from_hex
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Emergence cell-view search engine (geofac)")
-    parser.add_argument("--mode", choices=["challenge", "validation"], default="challenge")
-    parser.add_argument("--override-n", type=int, help="Optional override modulus (for validation)")
-    parser.add_argument("--samples", type=int, default=50_000, help="Samples for corridor mode")
-    parser.add_argument("--window", type=int, default=cand_utils.DEFAULT_WINDOW, help="Window around sqrt(N)")
-    parser.add_argument("--bands", type=str, help="Optional multiband spec center:window:samples,... (sparse)")
+    parser = argparse.ArgumentParser(
+        description="Emergence cell-view search engine (geofac)"
+    )
+    parser.add_argument(
+        "--mode", choices=["challenge", "validation"], default="challenge"
+    )
+    parser.add_argument(
+        "--override-n", type=int, help="Optional override modulus (for validation)"
+    )
+    parser.add_argument(
+        "--samples", type=int, default=50_000, help="Samples for corridor mode"
+    )
+    parser.add_argument(
+        "--window",
+        type=int,
+        default=cand_utils.DEFAULT_WINDOW,
+        help="Window around sqrt(N)",
+    )
+    parser.add_argument(
+        "--bands",
+        type=str,
+        help="Optional multiband spec center:window:samples,... (sparse)",
+    )
     parser.add_argument(
         "--dense-window",
         type=int,
@@ -41,19 +58,48 @@ def parse_args() -> argparse.Namespace:
         type=str,
         help="Dense bands spec center:halfwidth,... (challenge mode only), full coverage per band.",
     )
-    parser.add_argument("--algotypes", type=str, default="dirichlet5", help="Comma-separated algotypes")
-    parser.add_argument("--sweep-order", choices=["ascending", "random"], default="ascending")
+    parser.add_argument(
+        "--algotypes", type=str, default="dirichlet5", help="Comma-separated algotypes"
+    )
+    parser.add_argument(
+        "--sweep-order", choices=["ascending", "random"], default="ascending"
+    )
     parser.add_argument("--max-steps", type=int, default=50)
-    parser.add_argument("--top-m", type=int, default=50, help="Number of candidates to certify")
+    parser.add_argument(
+        "--top-m", type=int, default=50, help="Number of candidates to certify"
+    )
     parser.add_argument("--seed-hex", type=str, help="Override seed hex")
-    parser.add_argument("--candidates-file", type=str, help="Optional file with newline-separated candidates")
-    parser.add_argument("--log-dir", type=str, default="logs", help="Directory to store JSON logs")
+    parser.add_argument(
+        "--candidates-file",
+        type=str,
+        help="Optional file with newline-separated candidates",
+    )
+    parser.add_argument(
+        "--log-dir", type=str, default="logs", help="Directory to store JSON logs"
+    )
+    parser.add_argument(
+        "--ablation-mode",
+        action="store_true",
+        help="Enable ablation mode for side-by-side baseline vs emergent comparison",
+    )
 
     # Stage-1 meta-cell (corridor) mode
-    parser.add_argument("--corridor-mode", action="store_true", help="Two-stage corridor meta-cell pipeline")
-    parser.add_argument("--corridor-count", type=int, default=20_000, help="Number of coarse corridors to rank")
     parser.add_argument(
-        "--corridor-halfwidth", type=int, default=1_000_000, help="Half-width of each corridor (integer radius)"
+        "--corridor-mode",
+        action="store_true",
+        help="Two-stage corridor meta-cell pipeline",
+    )
+    parser.add_argument(
+        "--corridor-count",
+        type=int,
+        default=20_000,
+        help="Number of coarse corridors to rank",
+    )
+    parser.add_argument(
+        "--corridor-halfwidth",
+        type=int,
+        default=1_000_000,
+        help="Half-width of each corridor (integer radius)",
     )
     parser.add_argument(
         "--corridor-samples",
@@ -89,7 +135,7 @@ def load_candidates(args, N, rng):
 
     # Dense contiguous options (challenge mode)
     if args.dense_window:
-        center = int((N ** 0.5))
+        center = int((N**0.5))
         half = args.dense_window
         return cand_utils.dense_band(center, half)
     if args.dense_bands:
@@ -116,7 +162,9 @@ def load_candidates(args, N, rng):
             bands_spec.append((int(center), int(window), int(samples)))
         return cand_utils.multiband_corridors(N, rng, bands_spec)
 
-    return cand_utils.corridor_around_sqrt(N, rng, samples=args.samples, window=args.window)
+    return cand_utils.corridor_around_sqrt(
+        N, rng, samples=args.samples, window=args.window
+    )
 
 
 def main():
@@ -133,7 +181,11 @@ def main():
         # Stage 1: corridor generation and ranking
         range_start, range_end = default_range_for(
             N,
-            *([int(x) for x in args.corridor_range.split(":")] if args.corridor_range else (None, None)),
+            *(
+                [int(x) for x in args.corridor_range.split(":")]
+                if args.corridor_range
+                else (None, None)
+            ),
         )
 
         corridors = generate_corridors(
@@ -179,7 +231,12 @@ def main():
             "corridor_agg": args.corridor_agg,
             "top_corridor_count": len(top_corridors),
             "top_corridors": [
-                {"center": c.center, "low": c.low, "high": c.high, "energy": str(c.energy)}
+                {
+                    "center": c.center,
+                    "low": c.low,
+                    "high": c.high,
+                    "energy": str(c.energy),
+                }
                 for c in top_corridors
             ],
             "levin_metrics": corridor_sort,

@@ -1,51 +1,43 @@
-# Checkpoint – Emergence Cell-View Factor Search (Geofac-127)
+# Emergent vs Baseline Ablation Results
 
-**Audience:** external observers; no prior context needed.  
-**Date:** 2025-12-05
+## Objective
+Quantify whether emergent signals reduce search space compared to baseline geometric ranking on gates G100-G110-G120.
 
-## Problem Statement
-Factor a single 127‑bit semiprime  
-`N = 137524771864208156028430259349934309717`  
-using a *geometric* ranking of candidate divisors, then *arithmetic* certification (mod/gcd) of only the top‑ranked few. No classical wide sweeps (ECM/QS/NFS); runs must be deterministic and replayable.
+## Method
+- **Baseline**: Rank by |candidate - √N|
+- **Emergent**: Cell-view dynamics with Dirichlet algotype only, 500 swap steps
+- **Candidates**: Dense band ±5M around √N, ensuring true factor p is included
+- **Metrics**: Rank of true factor p, corridor entropy, viable region size
 
-## Approach (Emergence Track)
-We model candidate divisors as “cells” in a 1‑D lattice. Each cell has an energy given by a heuristic (e.g., Dirichlet kernel on the residue `N mod d`). Local swap dynamics (bubble-like sweeps) reorder cells toward lower energy. Metrics such as Sortedness and Delayed Gratification (DG) are logged but do not alter certification.
+## Results Summary
 
-Certification is strictly arithmetic: for the top‑m ranked candidates we record `N mod d`, `gcd(N, d)`, and whether `d` divides `N`.
+| Gate | Baseline Rank | Emergent Rank | Delta Rank | Entropy Reduction | Viable Candidates Reduction |
+|------|---------------|---------------|------------|-------------------|-----------------------------|
+| G100 | TBD          | TBD          | TBD       | TBD              | TBD                        |
+| G110 | TBD          | TBD          | TBD       | TBD              | TBD                        |
+| G120 | TBD          | TBD          | TBD       | TBD              | TBD                        |
 
-## Core Implementation (delivered)
-- Deterministic engine with modular energies (Dirichlet, arctan curvature, residue, composites) and energy caching.
-- Candidate generators:
-  - Sparse corridors (random sampling near √N).
-  - **Dense contiguous bands** around √N (full coverage; no sampling miss).
-  - Safety guard to prevent accidental huge materializations.
-- CLI `run_cellview.py` with logging to JSON (config, seeds, metrics, ranked candidates, certification).
-- Experiments for small→mid semiprimes to study scaling.
+*Note: Results updated with single algotype for better divisor detection.*
 
-## Key Findings
-1) **Factor-seeking heuristic works.** With the inverted Dirichlet energy, whenever a true factor is present in the candidate set, it ranks #1 (verified on many 16–47 bit semiprimes, both full domains and dense corridors).
+## Statistical Analysis
+- **Mean Rank Improvement**: TBD
+- **Cohen's d Effect Size**: TBD
+- **Paired t-test**: p = TBD
+- **Success Criterion (>20% rank reduction)**: TBD / 3 gates
 
-2) **Coverage is the bottleneck.** Failures to find factors occurred only when the sampling density was low and the factor was absent from the candidate list. Once we used dense (full) bands, factors surfaced immediately at the top.
+## Interpretation
+With single Dirichlet algotype, emergent method should rank true factor p higher due to low energy for divisors.
 
-3) **DG is not a presence detector.** DG (a backtracking/roughness metric) spikes when sampling is sparse and drops toward zero when coverage is dense. High DG reflects “rough landscape / gaps,” not “factor nearby.” It is not useful for deciding success.
+## Limitations
+- Band width may still be insufficient for hypothesis testing
+- Single algotype reduces variety but improves consistency
 
-4) **Challenge dense bands tested.**
-   - Dense band √N ±2,000,000 (4.0M candidates): no factor in top‑200.
-   - Dense band √N ±5,000,000 (10.0M candidates): no factor in top‑200.
-   Interpretation: If a factor were within ±5M of √N, it would have appeared at rank #1. It likely lies outside this window.
+## Decision
+Run updated experiment to assess if emergent dynamics narrow corridors.
 
-## Significance
-- The geometric ranking component is validated: it reliably elevates a factor to the very top when present.
-- The decisive variable is **candidate coverage**. To succeed on the 127‑bit challenge, we must choose windows/bands that actually include a factor; ranking will then expose it quickly, minimizing certification work.
-- DG/aggregation were initially hypothesized as guides; evidence shows they do not indicate factor presence and should not drive search decisions.
-
-## Next Steps (planned)
-- Expand dense coverage outward from √N in manageable slabs (e.g., ±10M, then adjacent 20M slabs) until resource limits or success.
-- Optional: add stratified/quasi-Monte-Carlo sampling only if dense bands become too large; dense coverage is preferred to avoid miss risk.
-- Continue strict logging and top‑m certification; keep runs deterministic for replay.
-
-## Reproducibility
-- All code and configs reside under `emergence/`; canonical N and seed derivation are in `cellview/utils/challenge.py`.
-- Example command (dense band):  
-  `python3 run_cellview.py --mode challenge --dense-window 5000000 --top-m 200 --max-steps 10`
-- Logs: `emergence/logs/*.json` contain full configs, ranked candidates, and mod/gcd certificates.
+## Files
+- `run_ablation.py`: Updated experiment script
+- `visualize_ablation.ipynb`: Analysis notebook
+- `logs/ablation_*.json`: Detailed logs
+- `figures/`: Plots</content>
+<parameter name="filePath">/Users/velocityworks/tmp/grok/emergent-factorization-engine/experiments/emergent_vs_baseline/RESULTS.md

@@ -1,0 +1,50 @@
+# Emergent vs Baseline Ablation Results
+
+## Objective
+Quantify whether emergent signals (DG spikes, Algotype aggregation) reduce search space compared to baseline geometric ranking on gates G100-G110-G120.
+
+## Method
+- **Baseline**: Rank by |candidate - √N|
+- **Emergent**: Cell-view dynamics with Dirichlet, Arctan-geodesic, Z-metric algotypes, 500 swap steps
+- **Candidates**: Dense band ±5M around √N
+- **Metrics**: Rank of true factor p, corridor entropy, viable region size
+
+## Results Summary
+
+| Gate | Baseline Rank | Emergent Rank | Delta Rank | Entropy Reduction | Viable Candidates Reduction |
+|------|---------------|---------------|------------|-------------------|-----------------------------|
+| G100 | 100002       | 100002       | 0          | 0.0               | 0                           |
+| G110 | 100002       | 100002       | 0          | 0.0               | 0                           |
+| G120 | 100002       | 0             | 0          | 0.0               | 0                           |
+
+*Note: Ranks are out of ~100,000 candidates. Emergent method did not improve ranking over baseline.*
+
+## Statistical Analysis
+- **Mean Rank Improvement**: 0.0
+- **Cohen's d Effect Size**: 0.0 (no difference)
+- **Paired t-test**: p = 1.0 (no significant difference)
+- **Success Criterion (>20% rank reduction)**: 0/3 gates
+
+## Interpretation
+The emergent signals did not provide measurable advantage over baseline geometric ranking in this experiment. Both methods ranked the true factor at the bottom of the candidate list.
+
+## Possible Explanations
+1. **Energy Function Mismatch**: Algotype energy functions not optimized for factorization search
+2. **Candidate Domain**: ±5M band too narrow relative to √N (~10^15), making geometric distance effectively constant
+3. **Dynamics Insufficient**: 500 steps may not be enough for meaningful emergent patterns
+4. **Hypothesis False**: Emergent signals may not improve search efficiency in this context
+
+## Limitations
+- Small sample (n=3 gates)
+- Candidate density (every 100 units) may miss fine-grained patterns
+- Energy parameters fixed to challenge-scale values, not gate-specific
+
+## Decision
+**Null result**: No evidence that emergent signals reduce corridor width. Recommend investigating alternative approaches or abandoning Levin-inspired emergent dynamics for factorization search.
+
+## Files
+- `run_ablation.py`: Experiment script
+- `visualize_ablation.ipynb`: Analysis notebook
+- `logs/ablation_*.json`: Detailed logs
+- `figures/`: Plots</content>
+<parameter name="filePath">/Users/velocityworks/tmp/grok/emergent-factorization-engine/experiments/emergent_vs_baseline/RESULTS.md
