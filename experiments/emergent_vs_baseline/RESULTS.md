@@ -6,7 +6,7 @@ Quantify whether emergent signals reduce search space compared to baseline geome
 ## Method
 - **Baseline**: Rank by |candidate - √N|
 - **Emergent**: Cell-view dynamics with Dirichlet algotype only, 500 swap steps
-- **Candidates**: Dense band ±5M around √N, ensuring true factor p is included
+- **Candidates**: Dense band ±5000 around √N, ensuring true factor p is included
 - **Metrics**: Rank of true factor p, corridor entropy, viable region size
 
 ## Results Summary

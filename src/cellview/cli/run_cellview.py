@@ -48,6 +48,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed-hex", type=str, help="Override seed hex")
     parser.add_argument("--candidates-file", type=str, help="Optional file with newline-separated candidates")
     parser.add_argument("--log-dir", type=str, default="logs", help="Directory to store JSON logs")
+    parser.add_argument("--ablation-mode", action="store_true", help="Enable corridor-width ablation metrics")
 
     # Stage-1 meta-cell (corridor) mode
     parser.add_argument("--corridor-mode", action="store_true", help="Two-stage corridor meta-cell pipeline")
