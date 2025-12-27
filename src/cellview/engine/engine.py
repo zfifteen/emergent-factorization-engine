@@ -26,12 +26,14 @@ class CellViewEngine:
         sweep_order: str = "ascending",
         max_steps: int = 50,
         type2_immovable: bool = False,
+        trace_activity: bool = False,
     ):
         self.N = N
         self.rng = rng
         self.sweep_order = sweep_order
         self.max_steps = max_steps
         self.type2_immovable = type2_immovable
+        self.trace_activity = trace_activity
         self.energy_specs = energy_specs or default_specs()
         # cache keyed by (algotype, n) to support multiple energy families
         self.energy_cache: Dict[tuple, Decimal] = {}
@@ -92,8 +94,9 @@ class CellViewEngine:
                 if not b.frozen:
                     self.cells[i], self.cells[i + 1] = self.cells[i + 1], self.cells[i]
                     swaps += 1
-                    active_candidates.append(a.n)
-                    active_candidates.append(b.n)
+                    if self.trace_activity:
+                        active_candidates.append(a.n)
+                        active_candidates.append(b.n)
         return swaps, active_candidates
 
     def run(self) -> Dict:
@@ -106,7 +109,8 @@ class CellViewEngine:
         for _ in range(self.max_steps):
             swaps, active = self.step()
             swaps_per_step.append(swaps)
-            active_candidates_per_step.append(active)
+            if self.trace_activity:
+                active_candidates_per_step.append(active)
             
             s_val = sortedness([c.n for c in self.cells])
             sortedness_series.append(s_val)
@@ -127,17 +131,21 @@ class CellViewEngine:
 
         ranked_candidates = sorted(final_state, key=lambda x: Decimal(x["energy"]))
 
-        return {
+        results = {
             "swaps_per_step": swaps_per_step,
             "sortedness": sortedness_series,
             "aggregation": aggregation_series,
             "dg_index_series": dg_index_series,
-            "active_candidates_per_step": active_candidates_per_step,
             "dg_episodes": [ep.__dict__ for ep in dg_episodes],
             "dg_index": dg_index,
             "final_state": final_state,
             "ranked_candidates": ranked_candidates,
         }
+        
+        if self.trace_activity:
+            results["active_candidates_per_step"] = active_candidates_per_step
+            
+        return results
 
 
 __all__ = ["Cell", "CellViewEngine"]

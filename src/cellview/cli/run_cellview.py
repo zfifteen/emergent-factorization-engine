@@ -48,6 +48,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--log-dir", type=str, default="logs", help="Directory to store JSON logs")
     
     parser.add_argument("--ablation-mode", action="store_true", help="Run baseline comparison and log ablation metrics")
+    parser.add_argument("--trace-activity", action="store_true", help="Trace active candidates per step (memory intensive)")
 
     # Stage-1 meta-cell (corridor) mode
     parser.add_argument("--corridor-mode", action="store_true", help="Two-stage corridor meta-cell pipeline")
@@ -195,7 +196,8 @@ def main():
     if args.mode == "challenge":
         cand_utils.guard_dense_domain_for_challenge(len(candidates), n=N)
 
-    # --- Ablation Mode: Pre-calculation (Baseline) ---
+    # --- Ablation Mode: Metrics & Baseline setup ---
+    ablation_baseline = None
     p_true = None
     if args.ablation_mode:
         # Attempt to find p_true from validation ladder
@@ -206,15 +208,17 @@ def main():
                     p_true = g.p
                     break
         except Exception:
-            pass # ignore if ladder generation fails
+            pass
 
         sqrt_N = isqrt(N)
         base_cands = [{'n': c, 'energy': abs(c - sqrt_N)} for c in candidates]
         base_cands.sort(key=lambda x: x['energy'])
         
-        # Calculate baseline metrics
-        # (Assuming corridor.py handles empty or single item logic if needed)
-        pass # Actual calculation happens later to add to payload
+        ablation_baseline = {
+            "entropy": corridor_entropy([x['energy'] for x in base_cands])
+        }
+        if p_true:
+            ablation_baseline["rank"] = effective_corridor_width(base_cands, N, p_true)
 
     engine = CellViewEngine(
         N=N,
@@ -224,6 +228,7 @@ def main():
         rng=rng,
         sweep_order=args.sweep_order,
         max_steps=args.max_steps,
+        trace_activity=args.trace_activity,
     )
     run_results = engine.run()
 
@@ -241,16 +246,8 @@ def main():
     if stage1_corridor_info:
         payload["stage1_corridors"] = stage1_corridor_info
 
-    # --- Ablation Mode: Metrics & Baseline Logging ---
     if args.ablation_mode:
-        # Re-calc baseline (it was just sorted above)
-        base_metrics = {
-            "entropy": corridor_entropy([x['energy'] for x in base_cands])
-        }
-        if p_true:
-            base_metrics["rank"] = effective_corridor_width(base_cands, N, p_true)
-        payload["ablation_baseline"] = base_metrics
-        
+        payload["ablation_baseline"] = ablation_baseline
         # Emergent metrics
         emergent_cands = run_results["ranked_candidates"]
         emergent_metrics = {

@@ -40,16 +40,16 @@ def run_experiment(args):
         
         # 3. Generate Candidate Domain
         # Issue text says "dense band ±5M around √N", but G-series gates are unbalanced (p << √N).
-        # If we search around √N, p_true is not present, and "rank of p" is undefined (-1).
-        # We assume the intent is to validate signal *in the corridor where p resides*.
-        # Thus, we center the band around p_true.
+        # We center the band around p_true to validate signal in its corridor.
         
         half_width = args.candidate_halfwidth
         center = p_true
         start = center - half_width
         end = center + half_width
-        # Ensure we cover positive integers > 1
         start = max(2, start)
+        
+        # Assertion to ensure p_true is actually in the search band
+        assert start <= p_true <= end, f"p_true ({p_true}) is not in band [{start}, {end}]"
         
         print(f"  Generating candidates around p_true ({center}) [{start}, {end}]...")
         candidates = list(range(start, end + 1))
@@ -59,14 +59,11 @@ def run_experiment(args):
         print("  Running Baseline (Geometric)...")
         t0 = time.time()
         # Rank by |d - sqrt(N)|. 
-        # We can just sort candidates by abs(x - sqrt_N).
         baseline_candidates = []
         for c in candidates:
             dist = abs(c - sqrt_N)
-            # Use minimal dict structure to mimic engine output
             baseline_candidates.append({'n': c, 'energy': dist})
         
-        # Sort by energy
         baseline_candidates.sort(key=lambda x: x['energy'])
         t_baseline = time.time() - t0
         print(f"  Baseline finished in {t_baseline:.2f}s")
@@ -83,7 +80,6 @@ def run_experiment(args):
         print("  Running Emergent (CellView)...")
         t1 = time.time()
         
-        # Construct specs with correct sqrt_N for this gate
         energy_specs = {
             "dirichlet5": EnergySpec("dirichlet5", dirichlet_energy, {"j": 5, "normalize": True, "invert": True}),
             "arctan_geodesic": EnergySpec("arctan_geodesic", arctan_geodesic_energy, {"sqrtN": sqrt_N, "scale": 2.0}),
@@ -98,7 +94,8 @@ def run_experiment(args):
             algotypes=algotypes,
             energy_specs=energy_specs,
             rng=None, 
-            max_steps=args.swap_steps
+            max_steps=args.swap_steps,
+            trace_activity=True # Ablation harness wants to trace activity
         )
         
         emergent_result = engine.run()
@@ -137,15 +134,7 @@ def run_experiment(args):
                     "dg_index": emergent_result["dg_index_series"]
                 },
                 "dg_episodes": emergent_result["dg_episodes"],
-                # We do NOT save "active_candidates_per_step" here because it could be massive for 10M candidates
-                # Unless we filter it. The issue asks for "Which candidates participate".
-                # Saving 500 lists of ~1000 items (if activity is low) is fine.
-                # But if activity is high, it's problematic.
-                # Let's verify size before dumping?
-                # Or just exclude it from the main JSON log if it's too big, 
-                # or save it to a separate file.
-                # For now, I will omit the full per-step active list to avoid generating multi-GB JSON files
-                # which would crash the write.
+                "active_candidates_per_step": emergent_result.get("active_candidates_per_step", [])
             }
         }
         
@@ -159,7 +148,7 @@ def run_experiment(args):
         if rank_base > 0:
             improvement = (rank_base - rank_emergent) / rank_base
         else:
-            improvement = 0.0 # Can't improve on rank 0
+            improvement = 0.0
             
         results_summary.append({
             "gate": gate.gate,
@@ -179,7 +168,7 @@ def run_experiment(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run corridor-width ablation experiments.")
     parser.add_argument("--gates", nargs="+", default=["G100", "G110", "G120"], help="Gates to test")
-    parser.add_argument("--candidate_halfwidth", type=int, default=5000000, help="Half-width of candidate band")
+    parser.add_argument("--candidate_halfwidth", type=int, default=50000, help="Half-width of candidate band")
     parser.add_argument("--swap_steps", type=int, default=500, help="Number of swap steps")
     parser.add_argument("--output_dir", default="logs/ablation/", help="Output directory")
     parser.add_argument("--energy_threshold", type=float, default=1.0, help="Energy threshold for viable region count")

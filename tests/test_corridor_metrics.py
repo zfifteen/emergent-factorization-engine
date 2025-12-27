@@ -13,6 +13,12 @@ class TestCorridorMetrics(unittest.TestCase):
         # Case 2: List of dicts
         candidates_dicts = [{'n': 100}, {'n': 101}, {'n': 102}]
         self.assertEqual(effective_corridor_width(candidates_dicts, 0, 101), 1)
+        
+        # Case 3: Empty list
+        self.assertEqual(effective_corridor_width([], 0, 101), -1)
+        
+        # Case 4: Single element
+        self.assertEqual(effective_corridor_width([101], 0, 101), 0)
 
     def test_corridor_entropy(self):
         # Case 1: Uniform energies -> Max entropy
@@ -24,13 +30,21 @@ class TestCorridorMetrics(unittest.TestCase):
         # E = [0, 100] -> P ~ [1, ~0] -> H ~ 0
         energies = [0.0, 100.0]
         self.assertLess(corridor_entropy(energies), 0.1)
+        
+        # Case 3: Empty list
+        self.assertEqual(corridor_entropy([]), 0.0)
+        
+        # Case 4: Single element
+        # E = [10.0] -> P = [1.0] -> H = 0.0
+        self.assertEqual(corridor_entropy([10.0]), 0.0)
 
     def test_viable_region_size(self):
         candidates = [
-            {'n': 1, 'energy': '0.1'},
-            {'n': 2, 'energy': '0.5'},
-            {'n': 3, 'energy': '1.0'},
-            {'n': 4, 'energy': '2.0'}
+            {'n': 1, 'energy': 0.1},
+            {'n': 2, 'energy': 0.5},
+            {'n': 3, 'energy': 1.0},
+            {'n': 4, 'energy': 2.0},
+            100  # Plain int should be ignored
         ]
         
         self.assertEqual(viable_region_size(candidates, 0.5), 2)
