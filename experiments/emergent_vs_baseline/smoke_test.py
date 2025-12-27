@@ -9,9 +9,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from cellview.utils.challenge import canonical_N
-from cellview.algos.cellview import Cellview
-from cellview.energies.dirichlet import dirichlet_energy
+# Test gate
+TEST_N = 35  # 5 * 7 (G010)
+
+from cellview.engine.engine import CellViewEngine
+from cellview.heuristics.core import default_specs
+from cellview.utils.rng import rng_from_hex
 from cellview.metrics.corridor import (
     effective_corridor_width,
     corridor_entropy,
@@ -24,17 +27,13 @@ def test_smoke():
     print("Running smoke test with G010...")
     
     # Small gate for quick test
-    N = canonical_N("G010")
-    if N is None:
-        print("ERROR: Cannot resolve G010")
-        return False
-    
+    N = TEST_N
     print(f"N = {N}")
     
     # Small candidate window
     isqrt_N = int(N**0.5)
     halfwidth = 50
-    start = isqrt_N - halfwidth
+    start = max(2, isqrt_N - halfwidth)  # Ensure start >= 2
     end = isqrt_N + halfwidth
     candidates_list = list(range(start, end))
     
@@ -62,16 +61,37 @@ def test_smoke():
     
     # Test emergent (minimal swaps)
     try:
-        cv = Cellview(N, candidates_list, energy_fn=dirichlet_energy)
-        cv.run_swaps(10)  # Just 10 swaps for smoke test
-        emergent_ranked = cv.get_sorted_candidates()
-        emergent_rank = effective_corridor_width(emergent_ranked, p)
+        seed_hex = f"{N:064x}"
+        rng = rng_from_hex(seed_hex)
+        energy_specs = default_specs()
+        
+        engine = CellViewEngine(
+            N=N,
+            candidates=candidates_list,
+            algotypes=["dirichlet5"],
+            energy_specs=energy_specs,
+            rng=rng,
+            sweep_order="ascending",
+            max_steps=10,  # Just 10 steps for smoke test
+        )
+        result = engine.run()
+        
+        emergent_ranked = result["ranked_candidates"]
+        emergent_rank = None
+        for idx, entry in enumerate(emergent_ranked, start=1):
+            if int(entry["n"]) == p:
+                emergent_rank = idx
+                break
+        
+        if emergent_rank is None:
+            emergent_rank = len(emergent_ranked) + 1
+            
         print(f"Emergent rank: {emergent_rank}")
         
         # Verify metrics compute without error
-        emergent_energies = [e for _c, e in emergent_ranked]
+        emergent_energies = [float(entry["energy"]) for entry in emergent_ranked]
         entropy = corridor_entropy(emergent_energies)
-        viable = viable_region_size(emergent_ranked, 0.5)
+        viable = viable_region_size([(int(e["n"]), float(e["energy"])) for e in emergent_ranked], 0.5)
         
         print(f"Entropy: {entropy:.6f}")
         print(f"Viable region: {viable}")

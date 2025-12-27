@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ablation experiment: emergent vs baseline ranking on G100-G110-G120.
+Ablation experiment: emergent vs baseline ranking on test gates.
 """
 import argparse
 import json
@@ -9,14 +9,23 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from cellview.utils.challenge import canonical_N
-from cellview.algos.cellview import Cellview
-from cellview.energies.dirichlet import dirichlet_energy
+from cellview.engine.engine import CellViewEngine
+from cellview.heuristics.core import default_specs
+from cellview.utils.rng import rng_from_hex
 from cellview.metrics.corridor import (
     effective_corridor_width,
     corridor_entropy,
     viable_region_size,
 )
+
+
+# Test gates (small semiprimes for validation)
+TEST_GATES = {
+    "G010": 35,  # 5 * 7
+    "G100": 10403,  # 101 * 103
+    "G110": 11663,  # 107 * 109
+    "G120": 14279,  # 113 * 127
+}
 
 
 def parse_args():
@@ -37,13 +46,13 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     for gate in args.gates:
-        N = canonical_N(gate)
+        N = TEST_GATES.get(gate)
         if N is None:
             print(f"Unknown gate {gate}, skipping")
             continue
 
         isqrt_N = int(N**0.5)
-        start = isqrt_N - args.candidate_halfwidth
+        start = max(2, isqrt_N - args.candidate_halfwidth)  # Ensure start >= 2
         end = isqrt_N + args.candidate_halfwidth
         candidates_list = list(range(start, end))
 
@@ -72,11 +81,32 @@ def main():
         baseline_entropy = corridor_entropy(baseline_energies)
 
         # Emergent: Dirichlet only
-        cv = Cellview(N, candidates_list, energy_fn=dirichlet_energy)
-        cv.run_swaps(args.swap_steps)
-        emergent_ranked = cv.get_sorted_candidates()
-        emergent_rank = effective_corridor_width(emergent_ranked, p)
-        emergent_energies = [e for _c, e in emergent_ranked]
+        seed_hex = f"{N:064x}"  # Deterministic seed from N
+        rng = rng_from_hex(seed_hex)
+        energy_specs = default_specs()
+        
+        engine = CellViewEngine(
+            N=N,
+            candidates=candidates_list,
+            algotypes=["dirichlet5"],
+            energy_specs=energy_specs,
+            rng=rng,
+            sweep_order="ascending",
+            max_steps=args.swap_steps,
+        )
+        result = engine.run()
+        
+        emergent_ranked = result["ranked_candidates"]
+        emergent_rank = None
+        for idx, entry in enumerate(emergent_ranked, start=1):
+            if int(entry["n"]) == p:
+                emergent_rank = idx
+                break
+        
+        if emergent_rank is None:
+            emergent_rank = len(emergent_ranked) + 1
+        
+        emergent_energies = [float(entry["energy"]) for entry in emergent_ranked]
         emergent_entropy = corridor_entropy(emergent_energies)
 
         # Record
