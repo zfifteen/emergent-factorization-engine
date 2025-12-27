@@ -4,13 +4,12 @@ import json
 import time
 from pathlib import Path
 from math import isqrt
-from decimal import Decimal
 import sys
 
 # Ensure src is in path
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent / "src"))
 
-from cellview.utils.ladder import generate_verification_ladder, GateSemiprime
+from cellview.utils.ladder import generate_verification_ladder
 from cellview.engine.engine import CellViewEngine
 from cellview.metrics.corridor import effective_corridor_width, corridor_entropy, viable_region_size
 from cellview.heuristics.core import EnergySpec, dirichlet_energy, arctan_geodesic_energy, z_metric_energy
@@ -39,26 +38,34 @@ def run_experiment(args):
         sqrt_N = isqrt(N)
         
         # 3. Generate Candidate Domain
-        # Issue text says "dense band ±5M around √N", but G-series gates are unbalanced (p << √N).
-        # We center the band around p_true to validate signal in its corridor.
-        
+        # Issue #11 specifies +/- band around sqrt(N). 
+        # Note: For unbalanced gates (G100+), p << sqrt(N), so p is absent from this band.
         half_width = args.candidate_halfwidth
-        center = p_true
+        
+        if args.center_on_p:
+            center = p_true
+            print(f"  Note: Centering on p_true ({center}) per --center-on-p flag.")
+        else:
+            center = sqrt_N
+            print(f"  Note: Centering on sqrt(N) ({center}) per Issue #11.")
+
         start = center - half_width
         end = center + half_width
         start = max(2, start)
         
-        # Assertion to ensure p_true is actually in the search band
-        assert start <= p_true <= end, f"p_true ({p_true}) is not in band [{start}, {end}]"
-        
-        print(f"  Generating candidates around p_true ({center}) [{start}, {end}]...")
+        # Check if p_true is in band
+        p_in_band = (start <= p_true <= end)
+        if not p_in_band and args.center_on_p:
+             # Should not happen with --center-on-p unless clamped
+             print(f"  Warning: p_true ({p_true}) is NOT in band [{start}, {end}] even with --center-on-p")
+
+        print(f"  Generating candidates around {center} [{start}, {end}]...")
         candidates = list(range(start, end + 1))
         print(f"  Generated {len(candidates)} candidates.")
         
         # --- Baseline Method ---
-        print("  Running Baseline (Geometric)...")
+        print("  Running Baseline (Geometric distance to sqrt(N))...")
         t0 = time.time()
-        # Rank by |d - sqrt(N)|. 
         baseline_candidates = []
         for c in candidates:
             dist = abs(c - sqrt_N)
@@ -66,7 +73,6 @@ def run_experiment(args):
         
         baseline_candidates.sort(key=lambda x: x['energy'])
         t_baseline = time.time() - t0
-        print(f"  Baseline finished in {t_baseline:.2f}s")
         
         # Metrics
         rank_base = effective_corridor_width(baseline_candidates, N, p_true)
@@ -95,12 +101,11 @@ def run_experiment(args):
             energy_specs=energy_specs,
             rng=None, 
             max_steps=args.swap_steps,
-            trace_activity=True # Ablation harness wants to trace activity
+            trace_activity=True
         )
         
         emergent_result = engine.run()
         t_emergent = time.time() - t1
-        print(f"  Emergent finished in {t_emergent:.2f}s")
         
         emergent_candidates = emergent_result['ranked_candidates']
         
@@ -117,6 +122,8 @@ def run_experiment(args):
             "gate": gate.gate,
             "N": str(N),
             "p_true": str(p_true),
+            "p_in_band": p_in_band,
+            "center": str(center),
             "baseline": {
                 "rank": rank_base,
                 "entropy": ent_base,
@@ -142,16 +149,14 @@ def run_experiment(args):
         with open(log_file, 'w') as f:
             json.dump(log_data, f, indent=2)
             
-        print(f"  Saved logs to {log_file}")
-        
         # Add to summary
-        if rank_base > 0:
+        improvement = 0.0
+        if p_in_band and rank_base > 0:
             improvement = (rank_base - rank_emergent) / rank_base
-        else:
-            improvement = 0.0
             
         results_summary.append({
             "gate": gate.gate,
+            "p_in_band": p_in_band,
             "baseline_rank": rank_base,
             "emergent_rank": rank_emergent,
             "improvement": improvement
@@ -160,9 +165,9 @@ def run_experiment(args):
     # Save summary CSV
     csv_file = out_dir / "summary.csv"
     with open(csv_file, 'w') as f:
-        f.write("gate,baseline_rank,emergent_rank,improvement\n")
+        f.write("gate,p_in_band,baseline_rank,emergent_rank,improvement\n")
         for r in results_summary:
-            f.write(f"{r['gate']},{r['baseline_rank']},{r['emergent_rank']},{r['improvement']:.4f}\n")
+            f.write(f"{r['gate']},{r['p_in_band']},{r['baseline_rank']},{r['emergent_rank']},{r['improvement']:.4f}\n")
     print(f"Saved summary to {csv_file}")
 
 if __name__ == "__main__":
@@ -172,6 +177,7 @@ if __name__ == "__main__":
     parser.add_argument("--swap_steps", type=int, default=500, help="Number of swap steps")
     parser.add_argument("--output_dir", default="logs/ablation/", help="Output directory")
     parser.add_argument("--energy_threshold", type=float, default=1.0, help="Energy threshold for viable region count")
+    parser.add_argument("--center-on-p", action="store_true", help="Center candidate band on p_true instead of sqrt(N)")
     
     args = parser.parse_args()
     run_experiment(args)

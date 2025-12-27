@@ -4,16 +4,16 @@
 
 Paired ablation experiments were conducted to quantify the value of emergent signals (Levin-inspired cell-view dynamics) compared to baseline geometric ranking.
 
-**Objective:** specific test of whether emergent dynamics (DG spikes, Algotype aggregation) reduce the candidate search space for factorization.
+**Objective:** Specific test of whether emergent dynamics (DG spikes, Algotype aggregation) reduce the candidate search space for factorization.
 
 **Methodology:**
 - **Gates:** G100, G110, G120 (Validation Ladder, p_true known).
 - **Candidate Domain:** Dense band of width 100,000 (±50k) centered around the true factor `p`.
-  - *Note:* Original plan specified centering around `sqrt(N)`, but given the unbalanced nature of the challenge (p << √N), `p` would be absent. Centering around `p` isolates the signal capability.
-- **Baseline:** Ranked by geometric distance `|n - √N|`.
+  - *Methodological Note:* Issue #11 specified centering around `√N`. However, for these unbalanced gates, `p << √N`, meaning `p` is absent from the `√N` neighborhood. To measure the *signal quality at the factor*, we centered the experiment on `p`. 
+- **Baseline:** Ranked by geometric distance `|n - √N|`. Note that this baseline is optimized for factors near `√N`.
 - **Emergent:** Cell-View Engine (500 steps) with 3 Algotypes (Dirichlet5, Arctan, Z-Metric). Ranked by final energy.
 
-## Results Summary
+## Results Summary (Centered on p)
 
 | Gate | Baseline Rank | Emergent Rank | Improvement |
 |------|---------------|---------------|-------------|
@@ -21,18 +21,16 @@ Paired ablation experiments were conducted to quantify the value of emergent sig
 | G110 | 50,000        | 2,180         | 95.64%      |
 | G120 | 50,000        | 2,119         | 95.76%      |
 
-**Key Finding:** The emergent method consistently reduced the effective corridor width by **>95%** across all tested gates. The true factor `p` was promoted from the middle of the pack (rank ~50,000) to the top ~2% (rank ~2,100).
+**Key Finding:** When the true factor `p` is present in the search space, the emergent method consistently reduces the effective corridor width by **>95%** compared to a naive geometric distance metric.
 
 ## Interpretation
 
-The baseline geometric heuristic provides no gradient in the local neighborhood of `p` (since `p` is far from `sqrt(N)`), resulting in a flat or arbitrary ranking.
+The baseline geometric heuristic ranks candidates based on their proximity to `√N`. In a local band around `p` (where `p << √N`), this heuristic produces a monotonic ranking that places `p` in the middle of the band, but offers no localized "spike" for the factor itself.
 
-The emergent signals (specifically Dirichlet resonance and Z-metric combined with local swapping dynamics) successfully identified `p` as a high-value (low-energy) candidate, moving it significantly up the rank list.
-
-This confirms the core research claim: **Emergent signals provide a measurable and significant advantage over naive geometric heuristics for candidate localization.**
+The emergent method (using Dirichlet resonance and spatial dynamics) successfully localizes `p`, promoting it from the median of the search space to the top ~2%. This demonstrates that the engine can extract factorization-relevant signals even when the candidate is distant from the geometric center of the semiprime's factor space.
 
 ## Conclusion
 
 **Decision:** PROCEED to G127 meta-cell corridor search.
 
-The success criterion (>20% rank reduction) was met and exceeded. The method is validated for use in the 127-bit challenge.
+While the baseline's "failure" in this specific test is partially due to the off-center search band, the emergent method's ability to highly rank the factor within a large dense domain validates its utility for the multi-stage G127 attack.

@@ -1,5 +1,4 @@
 import unittest
-from decimal import Decimal
 from cellview.metrics.corridor import effective_corridor_width, corridor_entropy, viable_region_size
 
 class TestCorridorMetrics(unittest.TestCase):
@@ -20,14 +19,18 @@ class TestCorridorMetrics(unittest.TestCase):
         # Case 4: Single element
         self.assertEqual(effective_corridor_width([101], 0, 101), 0)
 
+        # Case 5: Duplicate candidates - should return first occurrence
+        candidates_dups = [100, 102, 102, 103]
+        self.assertEqual(effective_corridor_width(candidates_dups, 0, 102), 1)
+
     def test_corridor_entropy(self):
         # Case 1: Uniform energies -> Max entropy
-        # E = [1, 1] -> P ~ [exp(-1), exp(-1)] -> P = [0.5, 0.5] -> H = 1 bit
+        # E = [1, 1] -> Softmax -> [0.5, 0.5] -> H = 1 bit
+        # With normalization: rng=0 -> uniform
         energies = [1.0, 1.0]
         self.assertAlmostEqual(corridor_entropy(energies), 1.0)
         
-        # Case 2: One much lower energy -> Low entropy
-        # E = [0, 100] -> P ~ [1, ~0] -> H ~ 0
+        # Case 2: Highly skewed energies -> Low entropy
         energies = [0.0, 100.0]
         self.assertLess(corridor_entropy(energies), 0.1)
         
@@ -35,7 +38,6 @@ class TestCorridorMetrics(unittest.TestCase):
         self.assertEqual(corridor_entropy([]), 0.0)
         
         # Case 4: Single element
-        # E = [10.0] -> P = [1.0] -> H = 0.0
         self.assertEqual(corridor_entropy([10.0]), 0.0)
 
     def test_viable_region_size(self):
