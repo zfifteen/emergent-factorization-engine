@@ -71,8 +71,9 @@ class CellViewEngine:
             return idxs
         return list(range(length - 1))
 
-    def step(self) -> int:
+    def step(self) -> Tuple[int, List[int]]:
         swaps = 0
+        active_candidates = []
         idxs = self.sweep_indices(len(self.cells))
         for i in idxs:
             a = self.cells[i]
@@ -91,18 +92,30 @@ class CellViewEngine:
                 if not b.frozen:
                     self.cells[i], self.cells[i + 1] = self.cells[i + 1], self.cells[i]
                     swaps += 1
-        return swaps
+                    active_candidates.append(a.n)
+                    active_candidates.append(b.n)
+        return swaps, active_candidates
 
     def run(self) -> Dict:
         swaps_per_step: List[int] = []
         sortedness_series: List[float] = []
         aggregation_series: List[float] = []
+        active_candidates_per_step: List[List[int]] = []
+        dg_index_series: List[float] = []
 
         for _ in range(self.max_steps):
-            swaps = self.step()
+            swaps, active = self.step()
             swaps_per_step.append(swaps)
-            sortedness_series.append(sortedness([c.n for c in self.cells]))
+            active_candidates_per_step.append(active)
+            
+            s_val = sortedness([c.n for c in self.cells])
+            sortedness_series.append(s_val)
             aggregation_series.append(aggregation([c.algotype for c in self.cells]))
+            
+            # DG Index so far
+            _, dg_idx = detect_dg(sortedness_series)
+            dg_index_series.append(dg_idx)
+
             if swaps == 0:
                 break
 
@@ -118,6 +131,8 @@ class CellViewEngine:
             "swaps_per_step": swaps_per_step,
             "sortedness": sortedness_series,
             "aggregation": aggregation_series,
+            "dg_index_series": dg_index_series,
+            "active_candidates_per_step": active_candidates_per_step,
             "dg_episodes": [ep.__dict__ for ep in dg_episodes],
             "dg_index": dg_index,
             "final_state": final_state,

@@ -1,8 +1,4 @@
-#!/usr/bin/env python3
-"""
-CLI entrypoint for the emergence cell-view engine.
-"""
-
+from math import isqrt
 import argparse
 import json
 import os
@@ -22,6 +18,8 @@ from cellview.utils.corridors import (
 from cellview.utils.challenge import CHALLENGE
 from cellview.utils.logging import ensure_dir, timestamp_id, write_json
 from cellview.utils.rng import rng_from_hex
+from cellview.metrics.corridor import effective_corridor_width, corridor_entropy
+from cellview.utils.ladder import generate_verification_ladder
 
 
 def parse_args() -> argparse.Namespace:
@@ -48,6 +46,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed-hex", type=str, help="Override seed hex")
     parser.add_argument("--candidates-file", type=str, help="Optional file with newline-separated candidates")
     parser.add_argument("--log-dir", type=str, default="logs", help="Directory to store JSON logs")
+    
+    parser.add_argument("--ablation-mode", action="store_true", help="Run baseline comparison and log ablation metrics")
 
     # Stage-1 meta-cell (corridor) mode
     parser.add_argument("--corridor-mode", action="store_true", help="Two-stage corridor meta-cell pipeline")
@@ -195,6 +195,27 @@ def main():
     if args.mode == "challenge":
         cand_utils.guard_dense_domain_for_challenge(len(candidates), n=N)
 
+    # --- Ablation Mode: Pre-calculation (Baseline) ---
+    p_true = None
+    if args.ablation_mode:
+        # Attempt to find p_true from validation ladder
+        try:
+            ladder = generate_verification_ladder()
+            for g in ladder:
+                if g.N == N:
+                    p_true = g.p
+                    break
+        except Exception:
+            pass # ignore if ladder generation fails
+
+        sqrt_N = isqrt(N)
+        base_cands = [{'n': c, 'energy': abs(c - sqrt_N)} for c in candidates]
+        base_cands.sort(key=lambda x: x['energy'])
+        
+        # Calculate baseline metrics
+        # (Assuming corridor.py handles empty or single item logic if needed)
+        pass # Actual calculation happens later to add to payload
+
     engine = CellViewEngine(
         N=N,
         candidates=candidates,
@@ -219,6 +240,25 @@ def main():
 
     if stage1_corridor_info:
         payload["stage1_corridors"] = stage1_corridor_info
+
+    # --- Ablation Mode: Metrics & Baseline Logging ---
+    if args.ablation_mode:
+        # Re-calc baseline (it was just sorted above)
+        base_metrics = {
+            "entropy": corridor_entropy([x['energy'] for x in base_cands])
+        }
+        if p_true:
+            base_metrics["rank"] = effective_corridor_width(base_cands, N, p_true)
+        payload["ablation_baseline"] = base_metrics
+        
+        # Emergent metrics
+        emergent_cands = run_results["ranked_candidates"]
+        emergent_metrics = {
+            "entropy": corridor_entropy([float(x['energy']) for x in emergent_cands])
+        }
+        if p_true:
+            emergent_metrics["rank"] = effective_corridor_width(emergent_cands, N, p_true)
+        payload["ablation_emergent"] = emergent_metrics
 
     ensure_dir(args.log_dir)
     run_id = timestamp_id("run")
