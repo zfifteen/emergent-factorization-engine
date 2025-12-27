@@ -50,6 +50,24 @@ class TestCorridorMetrics(unittest.TestCase):
         count = viable_region_size(candidates, 0.5)
         self.assertEqual(count, 0)
 
+    def test_effective_corridor_width_empty(self):
+        """Test rank with empty candidate list."""
+        candidates = []
+        rank = effective_corridor_width(candidates, 5)
+        self.assertEqual(rank, 1)  # len(0) + 1
+
+    def test_corridor_entropy_single_element(self):
+        """Test entropy for single element."""
+        energies = [1.0]
+        entropy = corridor_entropy(energies)
+        self.assertEqual(entropy, 0.0)
+
+    def test_corridor_entropy_negative_energies(self):
+        """Test entropy with negative/zero energies."""
+        energies = [0, 0, 0]
+        entropy = corridor_entropy(energies)
+        self.assertEqual(entropy, 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

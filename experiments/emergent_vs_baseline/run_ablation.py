@@ -43,9 +43,9 @@ def main():
             continue
 
         isqrt_N = int(N**0.5)
-        candidates_list = list(
-            range(isqrt_N - args.candidate_halfwidth, isqrt_N + args.candidate_halfwidth)
-        )
+        start = isqrt_N - args.candidate_halfwidth
+        end = isqrt_N + args.candidate_halfwidth
+        candidates_list = list(range(start, end))
 
         # Find true factor
         p = None
@@ -55,7 +55,12 @@ def main():
                 break
 
         if p is None:
-            print(f"{gate}: No factor in band, skipping")
+            print(f"{gate}: No factor in band [{start}, {end}), skipping")
+            continue
+
+        # Validate p is within bounds (defensive check)
+        if p < start or p >= end:
+            print(f"WARNING: {gate} factor p={p} outside band [{start}, {end})")
             continue
 
         # Baseline: geometric rank

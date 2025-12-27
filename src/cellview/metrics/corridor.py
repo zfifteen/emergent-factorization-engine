@@ -16,18 +16,22 @@ def corridor_entropy(energies):
     """
     Shannon entropy of normalized energies (higher = more spread).
     Returns 0.0 for empty or uniform distributions.
+    
+    For all-zero energies, softmax creates uniform distribution -> max entropy,
+    but we explicitly return 0.0 to indicate no useful signal.
     """
     if not energies:
         return 0.0
 
     total = sum(energies)
-    if total == 0:
+    if total <= 0:
+        # All energies are zero or negative: no meaningful distribution
         return 0.0
 
     probs = [e / total for e in energies]
     
-    # Check if uniform (all probabilities equal)
-    if len(set(probs)) == 1:
+    # Check if uniform (all probabilities equal within floating point precision)
+    if len(set(round(p, 10) for p in probs)) == 1:
         return 0.0
     
     entropy = 0.0
