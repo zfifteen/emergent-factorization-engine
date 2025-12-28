@@ -6,6 +6,9 @@ from decimal import Decimal
 from cellview.heuristics.core import EnergySpec, resolve_energy, default_specs
 from cellview.metrics.core import aggregation, detect_dg, sortedness
 
+import json
+import os
+
 
 @dataclass
 class Cell:
@@ -26,12 +29,16 @@ class CellViewEngine:
         sweep_order: str = "ascending",
         max_steps: int = 50,
         type2_immovable: bool = False,
+        ablation_mode: bool = False,
+        gate_id: Optional[str] = None,
     ):
         self.N = N
         self.rng = rng
         self.sweep_order = sweep_order
         self.max_steps = max_steps
         self.type2_immovable = type2_immovable
+        self.ablation_mode = ablation_mode
+        self.gate_id = gate_id
         self.energy_specs = energy_specs or default_specs()
         # cache keyed by (algotype, n) to support multiple energy families
         self.energy_cache: Dict[tuple, Decimal] = {}
@@ -43,6 +50,12 @@ class CellViewEngine:
         for idx, val in enumerate(candidates):
             algo = algotypes[idx % len(algotypes)]
             self.cells.append(Cell(n=val, algotype=algo, frozen=False, energy=None))
+
+        if self.ablation_mode:
+            for cell in self.cells:
+                _ = self.energy_of(cell)  # precompute all energies
+            self.min_energy_n = min(self.cells, key=lambda c: c.energy).n
+            self.algo_dist_around_min = []
 
     # --- energy helpers ---
     def energy_of(self, cell: Cell) -> Decimal:
@@ -71,8 +84,9 @@ class CellViewEngine:
             return idxs
         return list(range(length - 1))
 
-    def step(self) -> int:
+    def step(self) -> Tuple[int, List[Tuple[int, int]]]:
         swaps = 0
+        swapped_pairs = []
         idxs = self.sweep_indices(len(self.cells))
         for i in idxs:
             a = self.cells[i]
@@ -89,18 +103,29 @@ class CellViewEngine:
             if e_left > e_right:
                 # only allow if right is not frozen (it must "move into" lower energy slot)
                 if not b.frozen:
+                    swapped_pairs.append((a.n, b.n))
                     self.cells[i], self.cells[i + 1] = self.cells[i + 1], self.cells[i]
                     swaps += 1
-        return swaps
+        return swaps, swapped_pairs
 
     def run(self) -> Dict:
         swaps_per_step: List[int] = []
+        swapped_per_step: List[List[Tuple[int, int]]] = []
         sortedness_series: List[float] = []
         aggregation_series: List[float] = []
 
         for _ in range(self.max_steps):
-            swaps = self.step()
+            swaps, swapped_pairs = self.step()
             swaps_per_step.append(swaps)
+            if self.ablation_mode:
+                swapped_per_step.append(swapped_pairs)
+                pos = next(
+                    i for i, c in enumerate(self.cells) if c.n == self.min_energy_n
+                )
+                start = max(0, pos - 1)
+                end = min(len(self.cells), pos + 2)
+                around_algos = [self.cells[j].algotype for j in range(start, end)]
+                self.algo_dist_around_min.append(around_algos)
             sortedness_series.append(sortedness([c.n for c in self.cells]))
             aggregation_series.append(aggregation([c.algotype for c in self.cells]))
             if swaps == 0:
@@ -108,13 +133,18 @@ class CellViewEngine:
 
         dg_episodes, dg_index = detect_dg(sortedness_series)
         final_state = [
-            {"index": idx, "n": c.n, "algotype": c.algotype, "energy": str(self.energy_of(c))}
+            {
+                "index": idx,
+                "n": c.n,
+                "algotype": c.algotype,
+                "energy": str(self.energy_of(c)),
+            }
             for idx, c in enumerate(self.cells)
         ]
 
         ranked_candidates = sorted(final_state, key=lambda x: Decimal(x["energy"]))
 
-        return {
+        result = {
             "swaps_per_step": swaps_per_step,
             "sortedness": sortedness_series,
             "aggregation": aggregation_series,
@@ -123,6 +153,26 @@ class CellViewEngine:
             "final_state": final_state,
             "ranked_candidates": ranked_candidates,
         }
+
+        if self.ablation_mode and dg_episodes:
+            dg_participants = {}
+            for ep in dg_episodes:
+                participants = set()
+                for t in range(ep.start, ep.end + 1):
+                    if t < len(swapped_per_step):
+                        for pair in swapped_per_step[t]:
+                            participants.update([pair[0], pair[1]])
+                dg_participants[f"{ep.start}_{ep.end}"] = list(participants)
+            result["dg_participants"] = dg_participants
+            result["algo_dist_around_min"] = self.algo_dist_around_min
+
+        if self.gate_id:
+            os.makedirs("logs/ablation", exist_ok=True)
+            path = f"logs/ablation/gate_{self.gate_id}.json"
+            with open(path, "w") as f:
+                json.dump(result, f, indent=2)
+
+        return result
 
 
 __all__ = ["Cell", "CellViewEngine"]
