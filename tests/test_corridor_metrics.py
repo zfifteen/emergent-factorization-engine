@@ -62,6 +62,36 @@ class TestEffectiveCorridorWidth(unittest.TestCase):
         """Empty candidate list should return None."""
         self.assertIsNone(effective_corridor_width([], 17))
 
+    def test_tie_handling_returns_average_rank(self):
+        """Factor in tie group should return average rank of group."""
+        # Candidates at ranks 2, 3, 4 all have same energy
+        ranked = [
+            {"n": 10, "energy": "0.01"},  # rank 1
+            {"n": 20, "energy": "0.05"},  # rank 2 (tie)
+            {"n": 30, "energy": "0.05"},  # rank 3 (tie) - factor
+            {"n": 40, "energy": "0.05"},  # rank 4 (tie)
+            {"n": 50, "energy": "0.09"},  # rank 5
+        ]
+        # Average of ranks 2, 3, 4 = 3
+        result = effective_corridor_width(ranked, 30, handle_ties=True)
+        self.assertEqual(result, 3)
+
+    def test_tie_handling_disabled(self):
+        """With handle_ties=False, return actual position."""
+        ranked = [
+            {"n": 10, "energy": "0.05"},
+            {"n": 20, "energy": "0.05"},  # factor at position 2
+            {"n": 30, "energy": "0.05"},
+        ]
+        result = effective_corridor_width(ranked, 20, handle_ties=False)
+        self.assertEqual(result, 2)
+
+    def test_no_energy_field(self):
+        """Candidates without energy field should use position."""
+        ranked = [{"n": 10}, {"n": 20}, {"n": 30}]
+        result = effective_corridor_width(ranked, 20, handle_ties=True)
+        self.assertEqual(result, 2)
+
 
 class TestCorridorEntropy(unittest.TestCase):
     """Tests for corridor_entropy metric."""
@@ -98,6 +128,44 @@ class TestCorridorEntropy(unittest.TestCase):
         entropy = corridor_entropy(energies, normalize=True)
         self.assertGreater(entropy, 0.0)
         self.assertLess(entropy, 1.0)
+
+    def test_near_zero_energy_differences(self):
+        """Near-zero energy differences should return max entropy."""
+        # All energies differ by less than default threshold (1e-12)
+        base = Decimal("0.5")
+        energies = [base, base + Decimal("1e-15"), base - Decimal("1e-15")]
+        entropy = corridor_entropy(energies, normalize=True)
+        # Should be max entropy since differences are negligible
+        self.assertAlmostEqual(entropy, 1.0, places=5)
+
+    def test_custom_near_zero_threshold(self):
+        """Custom threshold should affect near-zero detection."""
+        energies = [Decimal("0.1"), Decimal("0.2"), Decimal("0.3")]
+        # With normal threshold, these are different
+        entropy_normal = corridor_entropy(energies, normalize=True)
+        self.assertLess(entropy_normal, 1.0)
+
+        # With very large threshold, treated as equal
+        entropy_high_thresh = corridor_entropy(
+            energies, normalize=True, near_zero_threshold=1.0
+        )
+        self.assertAlmostEqual(entropy_high_thresh, 1.0, places=5)
+
+    def test_zero_energies(self):
+        """Zero and near-zero energies should be handled gracefully."""
+        energies = [Decimal("0"), Decimal("0.001"), Decimal("0.01")]
+        entropy = corridor_entropy(energies, normalize=True)
+        # Should not raise, should return valid entropy
+        self.assertGreaterEqual(entropy, 0.0)
+        self.assertLessEqual(entropy, 1.0)
+
+    def test_negative_energies(self):
+        """Negative energies should be handled gracefully."""
+        # This shouldn't happen in practice, but test robustness
+        energies = [Decimal("-0.1"), Decimal("0.0"), Decimal("0.1")]
+        entropy = corridor_entropy(energies, normalize=True)
+        self.assertGreaterEqual(entropy, 0.0)
+        self.assertLessEqual(entropy, 1.0)
 
 
 class TestViableRegion(unittest.TestCase):
@@ -201,7 +269,7 @@ class TestToyExample(unittest.TestCase):
 
     def test_toy_semiprime(self):
         """Test with a simple semiprime N = 77 = 7 * 11."""
-        N = 77
+        # N = 77, p = 7, q = 11
         p = 7
         sqrt_N = 8  # isqrt(77) = 8
 

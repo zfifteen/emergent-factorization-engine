@@ -12,12 +12,13 @@ Metrics:
 
 from decimal import Decimal
 from math import log2
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, Optional, Sequence
 
 
 def effective_corridor_width(
     ranked_candidates: Sequence[Dict],
     true_factor: int,
+    handle_ties: bool = True,
 ) -> Optional[int]:
     """
     Compute the rank position of the true factor in a ranked candidate list.
@@ -28,19 +29,53 @@ def effective_corridor_width(
     Args:
         ranked_candidates: List of dicts with 'n' key, ordered by rank (best first)
         true_factor: The actual factor p we're searching for
+        handle_ties: If True and candidates have equal energies, return the
+            average rank of the tie group containing the factor.
 
     Returns:
         1-indexed rank of true factor, or None if not in candidates
+
+    Note:
+        When handle_ties=True and the factor is in a tie group (candidates with
+        identical energies), returns the average rank of that group. For example,
+        if candidates at ranks 2, 3, 4 all have energy=0.5 and the factor is
+        among them, returns 3.0 (the average of 2, 3, 4).
     """
+    factor_idx = None
     for idx, candidate in enumerate(ranked_candidates):
         if candidate.get("n") == true_factor:
-            return idx + 1  # 1-indexed rank
-    return None
+            factor_idx = idx
+            break
+
+    if factor_idx is None:
+        return None
+
+    if not handle_ties:
+        return factor_idx + 1  # 1-indexed rank
+
+    # Handle ties: find candidates with same energy
+    factor_energy = ranked_candidates[factor_idx].get("energy")
+    if factor_energy is None:
+        return factor_idx + 1  # No energy info, use position
+
+    # Find all candidates with the same energy
+    tie_indices = []
+    for idx, candidate in enumerate(ranked_candidates):
+        if candidate.get("energy") == factor_energy:
+            tie_indices.append(idx)
+
+    if len(tie_indices) <= 1:
+        return factor_idx + 1  # No ties
+
+    # Return average rank of the tie group (1-indexed)
+    avg_rank = sum(i + 1 for i in tie_indices) / len(tie_indices)
+    return int(round(avg_rank))
 
 
 def corridor_entropy(
     energies: Sequence[Decimal],
     normalize: bool = True,
+    near_zero_threshold: float = 1e-12,
 ) -> float:
     """
     Compute Shannon entropy of the energy distribution.
@@ -51,9 +86,16 @@ def corridor_entropy(
     Args:
         energies: List of energy values (Decimal or float-like)
         normalize: If True, normalize to [0, 1] range based on max entropy
+        near_zero_threshold: Values with range below this are treated as equal.
+            This prevents numerical instability when energies are very close.
 
     Returns:
         Entropy value (bits). If normalized, 0 = perfectly concentrated, 1 = uniform
+
+    Note:
+        The entropy is computed by converting energies to a probability distribution.
+        Lower energy = higher quality = higher probability. When all energies are
+        within near_zero_threshold of each other, returns maximum entropy (uniform).
     """
     if len(energies) < 2:
         return 0.0
@@ -62,20 +104,23 @@ def corridor_entropy(
     # We invert energies first since lower energy = better
     float_energies = [float(e) for e in energies]
 
-    # Avoid numerical issues - shift to have max at 0
+    # Handle edge cases
     max_e = max(float_energies)
-    if max_e == 0:
-        max_e = 1.0
-
-    # Convert to "quality" scores (higher is better for probability)
-    # Use 1 - normalized_energy as quality
     min_e = min(float_energies)
     range_e = max_e - min_e
-    if range_e < 1e-12:
-        # All energies equal - maximum entropy
+
+    # Near-zero range means all energies are effectively equal
+    if range_e < near_zero_threshold:
+        # All energies equal - maximum entropy (uniform distribution)
         return 1.0 if normalize else log2(len(energies))
 
-    qualities = [(max_e - e) / range_e + 1e-12 for e in float_energies]
+    # Handle case where max_e is zero or negative (shouldn't happen with proper energies)
+    if max_e <= 0:
+        max_e = near_zero_threshold
+
+    # Convert to "quality" scores (higher is better for probability)
+    # Use (max_e - e) / range_e as normalized quality, with small epsilon to avoid zeros
+    qualities = [(max_e - e) / range_e + near_zero_threshold for e in float_energies]
     total = sum(qualities)
     probs = [q / total for q in qualities]
 
