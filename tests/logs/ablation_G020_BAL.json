@@ -1,0 +1,17 @@
+{
+  "gate": "G020_BAL",
+  "N": "1099515822059",
+  "p": 1048573,
+  "baseline": {
+    "metrics": {
+      "rank_of_p": 8,
+      "corridor_entropy": 0.9790293029963082
+    }
+  },
+  "emergent": {
+    "metrics": {
+      "rank_of_p": 1,
+      "corridor_entropy": 0.9897807500299434
+    }
+  }
+}

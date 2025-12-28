@@ -17,6 +17,12 @@ cd experiments/emergent_vs_baseline
 python run_ablation.py --gates G100 G110 G120 --candidate-halfwidth 5000 --swap-steps 500 --output-dir ../../tests/logs
 ```
 
+**Note:** Gates with `N < 1_000_000` are skipped by the `MIN_GATE_N` guard. Use the scale-representative balanced gates below to generate results:
+
+```bash
+python run_ablation.py --gates G020_BAL G025_BAL G030_BAL --candidate-halfwidth 5000 --swap-steps 500 --output-dir ../../tests/logs
+```
+
 ### 2. Parse Logs
 ```bash
 cd ../../tests

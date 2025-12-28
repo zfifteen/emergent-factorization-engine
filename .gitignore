@@ -29,6 +29,8 @@ ENV/
 # Logs
 logs/
 *.log
+!tests/logs/
+!tests/logs/*.json
 
 # Pytest cache
 .pytest_cache/

@@ -25,7 +25,13 @@ TEST_GATES = {
     "G100": 10403,  # 101 * 103
     "G110": 11663,  # 107 * 109
     "G120": 14279,  # 113 * 127
+    # Scale-representative balanced gates (N >= 1e6)
+    "G020_BAL": 1099515822059,  # 1048573 * 1048583
+    "G025_BAL": 1125899772623531,  # 33554393 * 33554467
+    "G030_BAL": 1152921515344265237,  # 1073741827 * 1073741831
 }
+
+MIN_GATE_N = 1_000_000
 
 
 def parse_args():
@@ -49,6 +55,9 @@ def main():
         N = TEST_GATES.get(gate)
         if N is None:
             print(f"Unknown gate {gate}, skipping")
+            continue
+        if N < MIN_GATE_N:
+            print(f"{gate}: N={N} below MIN_GATE_N={MIN_GATE_N}, skipping")
             continue
 
         isqrt_N = int(N**0.5)
