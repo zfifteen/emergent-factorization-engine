@@ -141,7 +141,10 @@ def run_experiment(args):
                     "dg_index": emergent_result["dg_index_series"]
                 },
                 "dg_episodes": emergent_result["dg_episodes"],
-                "active_candidates_per_step": emergent_result.get("active_candidates_per_step", [])
+                "active_candidates_per_step": [
+                    # Downsample: only record first 1000 active candidates per step to avoid huge logs
+                    step_active[:1000] for step_active in emergent_result.get("active_candidates_per_step", [])
+                ]
             }
         }
         

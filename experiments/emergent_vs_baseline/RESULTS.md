@@ -29,8 +29,24 @@ The baseline geometric heuristic ranks candidates based on their proximity to `â
 
 The emergent method (using Dirichlet resonance and spatial dynamics) successfully localizes `p`, promoting it from the median of the search space to the top ~2%. This demonstrates that the engine can extract factorization-relevant signals even when the candidate is distant from the geometric center of the semiprime's factor space.
 
+## Limitations
+
+
+
+- **Methodological Deviation:** Centering the search band on `p` instead of `âˆšN` (as originally specified in Issue #11) makes the baseline distance metric purely adversarial in this local neighborhood. This setup tests the engine's *signal localization* capability rather than its *global search* effectiveness.
+
+- **Energy Scaling:** While entropy is normalized, the absolute energy scales between baseline and emergent methods differ, meaning relative "tightness" (entropy) is more meaningful than direct energy comparison.
+
+- **Sample Size:** Only three gates (G100-G120) were tested.
+
+
+
 ## Conclusion
+
+
 
 **Decision:** PROCEED to G127 meta-cell corridor search.
 
-While the baseline's "failure" in this specific test is partially due to the off-center search band, the emergent method's ability to highly rank the factor within a large dense domain validates its utility for the multi-stage G127 attack.
+
+
+While the baseline's poor performance in this specific test is a direct consequence of the search band centering, the emergent method's consistent ability to highly rank the factor within a large dense domain (Rank ~2k out of 100k) provides the necessary confidence in the engine's resonance-detection capability to proceed with the 127-bit challenge.

@@ -74,6 +74,13 @@ class CellViewEngine:
         return list(range(length - 1))
 
     def step(self) -> Tuple[int, List[int]]:
+        """
+        Perform one sweep of the lattice.
+        
+        Returns:
+            Tuple[int, List[int]]: (swaps_count, active_candidate_values)
+            Note: The return type was changed from int to Tuple in PR #15.
+        """
         swaps = 0
         active_candidates = []
         idxs = self.sweep_indices(len(self.cells))
