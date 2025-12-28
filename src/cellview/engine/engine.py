@@ -159,15 +159,16 @@ class CellViewEngine:
             for ep in dg_episodes:
                 participants = set()
                 for t in range(ep.start, ep.end + 1):
-                    for pair in swapped_per_step[t]:
-                        participants.update([pair[0], pair[1]])
-                dg_participants[(ep.start, ep.end)] = list(participants)
+                    if t < len(swapped_per_step):
+                        for pair in swapped_per_step[t]:
+                            participants.update([pair[0], pair[1]])
+                dg_participants[f"{ep.start}_{ep.end}"] = list(participants)
             result["dg_participants"] = dg_participants
             result["algo_dist_around_min"] = self.algo_dist_around_min
 
         if self.gate_id:
             os.makedirs("logs/ablation", exist_ok=True)
-            path = f"logs/ablation_gate_{self.gate_id}.json"
+            path = f"logs/ablation/gate_{self.gate_id}.json"
             with open(path, "w") as f:
                 json.dump(result, f, indent=2)
 

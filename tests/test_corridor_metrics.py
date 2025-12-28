@@ -1,5 +1,3 @@
-import pytest
-
 from cellview.metrics.corridor import (
     effective_corridor_width,
     corridor_entropy,
@@ -9,13 +7,15 @@ from cellview.metrics.corridor import (
 
 def test_effective_corridor_width():
     assert effective_corridor_width([10, 20, 30], 20) == 2
+    # 25 is intentionally not in the list; this tests the "not found" behavior
     assert effective_corridor_width([10, 20, 30], 25) == 4
+    assert effective_corridor_width([], 1) == 1
 
 
 def test_corridor_entropy():
-    import math
+    from math import log
 
-    assert abs(corridor_entropy([1, 1]) - math.log(2)) < 1e-6
+    assert abs(corridor_entropy([1, 1]) - log(2)) < 1e-6
     assert corridor_entropy([0, 20]) < 1e-6
 
 

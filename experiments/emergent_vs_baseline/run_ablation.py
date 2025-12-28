@@ -1,9 +1,8 @@
 import argparse
 import json
-import math
 from typing import Dict, List
 import yaml
-from mpmath import mp, mpf, sqrt as mp_sqrt
+from mpmath import mp, sqrt as mp_sqrt
 from decimal import Decimal
 from cellview.engine.engine import CellViewEngine
 from cellview.heuristics.core import default_specs
@@ -13,12 +12,12 @@ from cellview.metrics.corridor import (
     viable_region_size,
 )
 import random
+import os
+
+mp.dps = 50
 
 # Known factors for gates where available (add for lower gates if known)
-known_factors = {
-    # 'G010': 13,  # example
-    # add more
-}
+known_factors = {}
 
 
 def main():
@@ -29,6 +28,9 @@ def main():
     parser.add_argument("--candidate_halfwidth", type=int, default=5000000)
     parser.add_argument("--swap_steps", type=int, default=500)
     parser.add_argument("--output_dir", default="logs/ablation")
+    parser.add_argument(
+        "--algotypes", nargs="+", default=["dirichlet5", "arctan_geodesic", "z5d"]
+    )
     args = parser.parse_args()
 
     ladder = load_ladder("src/cellview/data/challenge_ladder.yaml")
@@ -36,7 +38,9 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     for gate in args.gates:
-        item = next(i for i in ladder if i["gate"] == gate)
+        item = next((i for i in ladder if i["gate"] == gate), None)
+        if not item:
+            raise ValueError(f"Gate {gate} not found in ladder")
         N = item["N"]
         effective_seed = item["effective_seed"]
         p_true = known_factors.get(gate, None)
@@ -55,15 +59,11 @@ def main():
         baseline_entropy = corridor_entropy(baseline_energies)
         baseline_viable = viable_region_size(
             [(d, e) for d, e in zip(sorted_baseline, baseline_energies)],
-            threshold=1000.0,
+            energy_threshold=1.0,
         )
 
         # Emergent method
-        algotypes = [
-            "dirichlet5",
-            "arctan_geodesic",
-            "z5d",
-        ]  # Adjust based on available heuristics
+        algotypes = args.algotypes
         rng = random.Random(effective_seed)
         energy_specs = default_specs()
         engine = CellViewEngine(
@@ -86,13 +86,13 @@ def main():
             if p_true and p_true in set(ranked_emergent)
             else None
         )
-        emergent_entropy = corridor_entropy(energies_emergent)
+        emergent_entropy = corridor_entropy([float(e) for e in energies_emergent])
         emergent_viable = viable_region_size(
             [
-                (item["n"], Decimal(item["energy"]))
+                (item["n"], float(item["energy"]))
                 for item in result["ranked_candidates"]
             ],
-            threshold=Decimal("1"),
+            energy_threshold=1.0,
         )
 
         summary.append(
@@ -142,13 +142,14 @@ def main():
 
 
 def load_ladder(path: str) -> List[Dict]:
+    """Load ladder data from YAML file."""
     with open(path, "r") as f:
         data = yaml.safe_load(f)
         return data["ladder"]
 
 
 def generate_candidates(N: int, halfwidth: int) -> List[int]:
-    mp.dps = 50
+    """Generate candidate factors around sqrt(N) with given halfwidth."""
     sqrt_n = mp.sqrt(N)
     candidates = []
     for offset in range(-halfwidth, halfwidth + 1):

@@ -6,7 +6,7 @@ from typing import List, Tuple
 
 def effective_corridor_width(sorted_candidates: List[int], p_true: int) -> int:
     """Return 1-based rank of true factor p in sorted candidate list.
-    Lower rank = narrower corridor."""
+    Lower rank = narrower corridor. If p_true is not in sorted_candidates, returns len(sorted_candidates) + 1."""
     for rank, candidate in enumerate(sorted_candidates, 1):
         if candidate == p_true:
             return rank
@@ -19,11 +19,11 @@ def corridor_entropy(energies: List[float]) -> float:
     if not energies:
         return 0.0
     max_e = max(energies)
-    probs_raw = [exp(-(e - max_e)) for e in energies]
-    total = sum(probs_raw)
+    unnormalized_probs = [exp(-(e - max_e)) for e in energies]
+    total = sum(unnormalized_probs)
     if total == 0:
         return 0.0
-    probs = [p / total for p in probs_raw]
+    probs = [p / total for p in unnormalized_probs]
     return -sum(p * log(p) for p in probs if p > 0)
 
 
