@@ -33,3 +33,6 @@ def viable_region_size(
     """Count candidates with energy below threshold.
     Fewer = more focused search."""
     return sum(1 for _, energy in candidates if energy < energy_threshold)
+
+
+__all__ = ["effective_corridor_width", "corridor_entropy", "viable_region_size"]

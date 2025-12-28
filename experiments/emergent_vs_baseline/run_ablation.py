@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+Ablation runner comparing emergent ranking vs baseline certification on dense bands.
+"""
+
 import argparse
 import json
 from typing import Dict, List
@@ -15,6 +20,8 @@ import random
 import os
 
 mp.dps = 50
+
+MIN_GATE_N = 10**6  # Always ignore small-N gates to avoid skewed ablation results.
 
 # Known factors for gates where available (add for lower gates if known)
 known_factors = {}
@@ -42,6 +49,8 @@ def main():
         if not item:
             raise ValueError(f"Gate {gate} not found in ladder")
         N = item["N"]
+        if N < MIN_GATE_N:
+            continue
         effective_seed = item["effective_seed"]
         p_true = known_factors.get(gate, None)
 
