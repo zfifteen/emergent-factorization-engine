@@ -23,4 +23,19 @@ def rng_from_hex(seed_hex: Optional[str] = None) -> random.Random:
     return rng
 
 
-__all__ = ["rng_from_hex"]
+def create_rng(seed: int) -> random.Random:
+    """
+    Create a Random instance seeded with an integer.
+
+    Args:
+        seed: Integer seed value
+
+    Returns:
+        Seeded random.Random instance
+    """
+    rng = random.Random()
+    rng.seed(seed)
+    return rng
+
+
+__all__ = ["rng_from_hex", "create_rng"]
