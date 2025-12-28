@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+"""
+Paired Ablation Experiment Harness for Corridor-Width Metrics.
+
+This script compares baseline geometric ranking (distance to sqrt(N)) against 
+emergent Cell-View dynamics (Dirichlet, Arctan, Z-Metric). It quantifies signal 
+quality by measuring rank reduction of true factors, entropy localization, 
+and viable search region size.
+
+Usage:
+    python run_ablation.py --gates G100 G110 G120 --candidate_halfwidth 50000
+"""
+
 import argparse
 import json
 import time
@@ -14,7 +26,7 @@ from cellview.engine.engine import CellViewEngine
 from cellview.metrics.corridor import effective_corridor_width, corridor_entropy, viable_region_size
 from cellview.heuristics.core import EnergySpec, dirichlet_energy, arctan_geodesic_energy, z_metric_energy
 
-# Scale Guard: PR #14 revealed that N < 1e6 leads to geometric clustering bias. 
+# Scale Guard: PR #14 revealed that N < 1e6 leads to geometric clustering bias.
 # We set a stricter threshold (1e9) for scale-representative dynamics.
 MIN_GATE_N = 1_000_000_000
 
@@ -42,7 +54,6 @@ def run_experiment(args):
     
     # 2. Get Gates
     ladder = generate_verification_ladder()
-    # Convert ladder objects to dicts for uniform handling with synthetics
     all_available = []
     for g in ladder:
         all_available.append({"gate": g.gate, "N": g.N, "p": g.p, "note": "Ladder gate"})
@@ -74,8 +85,8 @@ def run_experiment(args):
         half_width = args.candidate_halfwidth
         
         if args.center_on_p:
+            print(f"  ⚠️  METHODOLOGICAL NOTE: Centering on p_true (Issue #11 deviation)")
             center = p_true
-            print(f"  Note: Centering on p_true ({center}) per --center-on-p flag.")
         else:
             center = sqrt_N
             print(f"  Note: Centering on sqrt(N) ({center}) per Issue #11.")
@@ -106,6 +117,9 @@ def run_experiment(args):
         
         # Metrics
         rank_base = effective_corridor_width(baseline_candidates, N, p_true)
+        if p_in_band and rank_base == -1:
+            raise ValueError(f"CRITICAL: p_true ({p_true}) reported in band but not found in baseline ranking.")
+
         energies_base = [x['energy'] for x in baseline_candidates]
         ent_base = corridor_entropy(energies_base)
         viable_base = viable_region_size(baseline_candidates, args.energy_threshold)
@@ -141,6 +155,9 @@ def run_experiment(args):
         
         # Metrics
         rank_emergent = effective_corridor_width(emergent_candidates, N, p_true)
+        if p_in_band and rank_emergent == -1:
+            raise ValueError(f"CRITICAL: p_true ({p_true}) reported in band but not found in emergent ranking.")
+
         energies_emergent = [float(x['energy']) for x in emergent_candidates]
         ent_emergent = corridor_entropy(energies_emergent)
         viable_emergent = viable_region_size(emergent_candidates, args.energy_threshold)

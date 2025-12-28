@@ -57,10 +57,20 @@ class CellViewEngine:
         spec = self.energy_specs.get(cell.algotype)
         if spec is None:
             # fallback: try registry by name
-            fn = resolve_energy(cell.algotype)
-            spec = EnergySpec(cell.algotype, fn, {})
-            self.energy_specs[cell.algotype] = spec
-        value = spec.fn(cell.n, self.N, spec.params)
+            try:
+                fn = resolve_energy(cell.algotype)
+                spec = EnergySpec(cell.algotype, fn, {})
+                self.energy_specs[cell.algotype] = spec
+            except ValueError:
+                # Use a safe fallback (max energy) if unknown
+                return Decimal(1)
+
+        try:
+            value = spec.fn(cell.n, self.N, spec.params)
+        except Exception:
+            # Fallback for unexpected math errors
+            return Decimal(1)
+
         self.energy_cache[cache_key] = value
         cell.energy = value
         return value
@@ -79,7 +89,6 @@ class CellViewEngine:
         
         Returns:
             Tuple[int, List[int]]: (swaps_count, active_candidate_values)
-            Note: The return type was changed from int to Tuple in PR #15.
         """
         swaps = 0
         active_candidates = []
@@ -101,7 +110,8 @@ class CellViewEngine:
                 if not b.frozen:
                     self.cells[i], self.cells[i + 1] = self.cells[i + 1], self.cells[i]
                     swaps += 1
-                    if self.trace_activity:
+                    # Limit memory: only trace first 5000 active swaps per step
+                    if self.trace_activity and len(active_candidates) < 5000:
                         active_candidates.append(a.n)
                         active_candidates.append(b.n)
         return swaps, active_candidates
@@ -113,10 +123,11 @@ class CellViewEngine:
         active_candidates_per_step: List[List[int]] = []
         dg_index_series: List[float] = []
 
-        for _ in range(self.max_steps):
+        for step_idx in range(self.max_steps):
             swaps, active = self.step()
             swaps_per_step.append(swaps)
-            if self.trace_activity:
+            # Limit memory: only trace active candidates for first 100 steps
+            if self.trace_activity and step_idx < 100:
                 active_candidates_per_step.append(active)
             
             s_val = sortedness([c.n for c in self.cells])

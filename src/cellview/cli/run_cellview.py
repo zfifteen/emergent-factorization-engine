@@ -123,149 +123,163 @@ def load_candidates(args, N, rng):
 def main():
     args = parse_args()
     N = args.override_n or CHALLENGE.n
+    run_id = timestamp_id("run")
+    ensure_dir(args.log_dir)
 
-    algotypes = [a.strip() for a in args.algotypes.split(",") if a.strip()]
-    energy_specs: Dict[str, any] = default_specs()
-    rng = rng_from_hex(args.seed_hex)
+    try:
+        algotypes = [a.strip() for a in args.algotypes.split(",") if a.strip()]
+        energy_specs: Dict[str, any] = default_specs()
+        rng = rng_from_hex(args.seed_hex)
 
-    stage1_corridor_info = None
+        stage1_corridor_info = None
 
-    if args.corridor_mode:
-        # Stage 1: corridor generation and ranking
-        range_start, range_end = default_range_for(
-            N,
-            *([int(x) for x in args.corridor_range.split(":")] if args.corridor_range else (None, None)),
-        )
-
-        corridors = generate_corridors(
-            range_start=range_start,
-            range_end=range_end,
-            half_width=args.corridor_halfwidth,
-            num_corridors=args.corridor_count,
-            rng=rng,
-        )
-
-        # Use the first algotype (or default) for corridor energy scoring
-        algo_key = algotypes[0] if algotypes else "dirichlet5"
-        energy_spec = energy_specs.get(algo_key) or default_specs().get(algo_key)
-        if energy_spec is None:
-            energy_fn = resolve_energy(algo_key)
-            energy_spec = EnergySpec(algo_key, energy_fn, {})
-            energy_specs[algo_key] = energy_spec
-
-        cache: Dict[tuple, any] = {}
-        for c in corridors:
-            score_corridor(
-                corridor=c,
-                N=N,
-                energy_spec=energy_spec,
-                samples=args.corridor_samples,
-                rng=rng,
-                aggregator=args.corridor_agg,
-                energy_cache=cache,
+        if args.corridor_mode:
+            # Stage 1: corridor generation and ranking
+            range_start, range_end = default_range_for(
+                N,
+                *([int(x) for x in args.corridor_range.split(":")] if args.corridor_range else (None, None)),
             )
 
-        corridor_sort = levin_sort_corridors(corridors, max_steps=args.max_steps)
-        ranked_corridors = sorted(corridors, key=lambda c: c.energy)
-        top_corridors = ranked_corridors[: args.corridor_topk]
+            corridors = generate_corridors(
+                range_start=range_start,
+                range_end=range_end,
+                half_width=args.corridor_halfwidth,
+                num_corridors=args.corridor_count,
+                rng=rng,
+            )
 
-        candidates = expand_corridors_to_candidates(top_corridors)
+            # Use the first algotype (or default) for corridor energy scoring
+            algo_key = algotypes[0] if algotypes else "dirichlet5"
+            energy_spec = energy_specs.get(algo_key) or default_specs().get(algo_key)
+            if energy_spec is None:
+                energy_fn = resolve_energy(algo_key)
+                energy_spec = EnergySpec(algo_key, energy_fn, {})
+                energy_specs[algo_key] = energy_spec
 
-        stage1_corridor_info = {
-            "range_start": range_start,
-            "range_end": range_end,
-            "corridor_count": len(corridors),
-            "corridor_halfwidth": args.corridor_halfwidth,
-            "corridor_samples": args.corridor_samples,
-            "corridor_agg": args.corridor_agg,
-            "top_corridor_count": len(top_corridors),
-            "top_corridors": [
-                {"center": c.center, "low": c.low, "high": c.high, "energy": str(c.energy)}
-                for c in top_corridors
-            ],
-            "levin_metrics": corridor_sort,
-        }
+            cache: Dict[tuple, any] = {}
+            for c in corridors:
+                score_corridor(
+                    corridor=c,
+                    N=N,
+                    energy_spec=energy_spec,
+                    samples=args.corridor_samples,
+                    rng=rng,
+                    aggregator=args.corridor_agg,
+                    energy_cache=cache,
+                )
 
-        print(
-            f"Corridor mode: ranked {len(corridors)} corridors across [{range_start}, {range_end}] "
-            f"→ top {len(top_corridors)} expanded to {len(candidates)} candidates"
+            corridor_sort = levin_sort_corridors(corridors, max_steps=args.max_steps)
+            ranked_corridors = sorted(corridors, key=lambda c: c.energy)
+            top_corridors = ranked_corridors[: args.corridor_topk]
+
+            candidates = expand_corridors_to_candidates(top_corridors)
+
+            stage1_corridor_info = {
+                "range_start": range_start,
+                "range_end": range_end,
+                "corridor_count": len(corridors),
+                "corridor_halfwidth": args.corridor_halfwidth,
+                "corridor_samples": args.corridor_samples,
+                "corridor_agg": args.corridor_agg,
+                "top_corridor_count": len(top_corridors),
+                "top_corridors": [
+                    {"center": c.center, "low": c.low, "high": c.high, "energy": str(c.energy)}
+                    for c in top_corridors
+                ],
+                "levin_metrics": corridor_sort,
+            }
+
+            print(
+                f"Corridor mode: ranked {len(corridors)} corridors across [{range_start}, {range_end}] "
+                f"→ top {len(top_corridors)} expanded to {len(candidates)} candidates"
+            )
+        else:
+            candidates = load_candidates(args, N, rng)
+
+        if args.mode == "challenge":
+            cand_utils.guard_dense_domain_for_challenge(len(candidates), n=N)
+
+        # --- Ablation Mode: Metrics & Baseline setup ---
+        ablation_baseline = None
+        p_true = None
+        if args.ablation_mode:
+            # Attempt to find p_true from validation ladder
+            try:
+                ladder = generate_verification_ladder()
+                for g in ladder:
+                    if g.N == N:
+                        p_true = g.p
+                        break
+            except Exception:
+                pass
+
+            sqrt_N = isqrt(N)
+            base_cands = [{'n': c, 'energy': abs(c - sqrt_N)} for c in candidates]
+            base_cands.sort(key=lambda x: x['energy'])
+            
+            ablation_baseline = {
+                "entropy": corridor_entropy([x['energy'] for x in base_cands])
+            }
+            if p_true:
+                ablation_baseline["rank"] = effective_corridor_width(base_cands, N, p_true)
+
+        engine = CellViewEngine(
+            N=N,
+            candidates=candidates,
+            algotypes=algotypes,
+            energy_specs=energy_specs,
+            rng=rng,
+            sweep_order=args.sweep_order,
+            max_steps=args.max_steps,
+            trace_activity=args.trace_activity,
         )
-    else:
-        candidates = load_candidates(args, N, rng)
+        run_results = engine.run()
 
-    if args.mode == "challenge":
-        cand_utils.guard_dense_domain_for_challenge(len(candidates), n=N)
+        cert_results = certify_top_m(run_results["ranked_candidates"], N, m=args.top_m)
 
-    # --- Ablation Mode: Metrics & Baseline setup ---
-    ablation_baseline = None
-    p_true = None
-    if args.ablation_mode:
-        # Attempt to find p_true from validation ladder
-        try:
-            ladder = generate_verification_ladder()
-            for g in ladder:
-                if g.N == N:
-                    p_true = g.p
-                    break
-        except Exception:
-            pass
-
-        sqrt_N = isqrt(N)
-        base_cands = [{'n': c, 'energy': abs(c - sqrt_N)} for c in candidates]
-        base_cands.sort(key=lambda x: x['energy'])
-        
-        ablation_baseline = {
-            "entropy": corridor_entropy([x['energy'] for x in base_cands])
+        payload = {
+            "config": vars(args),
+            "N": str(N),
+            "seed_hex": args.seed_hex or CHALLENGE.seed_hex,
+            "candidate_count": len(candidates),
+            "results": run_results,
+            "certification": cert_results,
         }
-        if p_true:
-            ablation_baseline["rank"] = effective_corridor_width(base_cands, N, p_true)
 
-    engine = CellViewEngine(
-        N=N,
-        candidates=candidates,
-        algotypes=algotypes,
-        energy_specs=energy_specs,
-        rng=rng,
-        sweep_order=args.sweep_order,
-        max_steps=args.max_steps,
-        trace_activity=args.trace_activity,
-    )
-    run_results = engine.run()
+        if stage1_corridor_info:
+            payload["stage1_corridors"] = stage1_corridor_info
 
-    cert_results = certify_top_m(run_results["ranked_candidates"], N, m=args.top_m)
+        if args.ablation_mode:
+            payload["ablation_baseline"] = ablation_baseline
+            # Emergent metrics
+            emergent_cands = run_results["ranked_candidates"]
+            emergent_metrics = {
+                "entropy": corridor_entropy([float(x['energy']) for x in emergent_cands])
+            }
+            if p_true:
+                emergent_metrics["rank"] = effective_corridor_width(emergent_cands, N, p_true)
+            payload["ablation_emergent"] = emergent_metrics
 
-    payload = {
-        "config": vars(args),
-        "N": str(N),
-        "seed_hex": args.seed_hex or CHALLENGE.seed_hex,
-        "candidate_count": len(candidates),
-        "results": run_results,
-        "certification": cert_results,
-    }
+        log_path = os.path.join(args.log_dir, f"{run_id}.json")
+        write_json(log_path, payload)
 
-    if stage1_corridor_info:
-        payload["stage1_corridors"] = stage1_corridor_info
+        print(f"Run complete. Candidates: {len(candidates)}. Log: {log_path}")
+        print(f"Top-{args.top_m} certified (showing first 5):")
+        for row in cert_results[:5]:
+            print(json.dumps(row, default=str))
 
-    if args.ablation_mode:
-        payload["ablation_baseline"] = ablation_baseline
-        # Emergent metrics
-        emergent_cands = run_results["ranked_candidates"]
-        emergent_metrics = {
-            "entropy": corridor_entropy([float(x['energy']) for x in emergent_cands])
+    except Exception as e:
+        error_payload = {
+            "config": vars(args),
+            "error": str(e),
+            "type": type(e).__name__,
+            "status": "failed"
         }
-        if p_true:
-            emergent_metrics["rank"] = effective_corridor_width(emergent_cands, N, p_true)
-        payload["ablation_emergent"] = emergent_metrics
+        error_path = os.path.join(args.log_dir, f"{run_id}_error.json")
+        write_json(error_path, error_payload)
+        print(f"CRITICAL ERROR: {e}. Diagnostics saved to {error_path}")
+        raise
 
-    ensure_dir(args.log_dir)
-    run_id = timestamp_id("run")
-    log_path = os.path.join(args.log_dir, f"{run_id}.json")
-    write_json(log_path, payload)
-
-    print(f"Run complete. Candidates: {len(candidates)}. Log: {log_path}")
-    print(f"Top-{args.top_m} certified (showing first 5):")
-    for row in cert_results[:5]:
-        print(json.dumps(row, default=str))
 
 
 if __name__ == "__main__":

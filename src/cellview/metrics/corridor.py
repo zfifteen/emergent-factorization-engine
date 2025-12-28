@@ -2,6 +2,10 @@ from typing import List, Union, Dict
 import math
 from decimal import Decimal
 
+# Softmax scale range to allow significant peaking. 
+# Higher range = lower entropy for the same relative spread.
+ENTROPY_SCALE_RANGE = 10.0
+
 def effective_corridor_width(candidates: List[Union[int, Dict]], N: int, p_true: int) -> int:
     """
     Return rank of true factor p in sorted candidate list.
@@ -13,14 +17,14 @@ def effective_corridor_width(candidates: List[Union[int, Dict]], N: int, p_true:
             return rank
     return -1
 
-def corridor_entropy(energy_profile: List[float]) -> float:
+def corridor_entropy(energy_profile: List[float], scale_range: float = ENTROPY_SCALE_RANGE) -> float:
     """
     Shannon entropy of energy distribution over candidates.
     Lower entropy = tighter localization.
     
     Uses Softmax: P_i = exp(-E_i / T) / sum(exp(-E_j / T)).
     
-    Normalization: We map energies to [0, 10] to ensure the Softmax 
+    Normalization: We map energies to [0, scale_range] to ensure the Softmax 
     can actually "peak" even if original energy scales were small. 
     Without this, Softmax on [0, 1] range is quite flat (H ~ log2(N)).
     """
@@ -37,9 +41,8 @@ def corridor_entropy(energy_profile: List[float]) -> float:
     if rng < 1e-12:
         return math.log2(len(values))
         
-    # Map to [0, 10] to allow significant peaking in the exp() call
-    # Higher range = lower entropy for the same relative spread.
-    scaled = [10.0 * (v - min_v) / rng for v in values]
+    # Map to [0, scale_range] to allow significant peaking in the exp() call
+    scaled = [scale_range * (v - min_v) / rng for v in values]
     
     exps = [math.exp(-s) for s in scaled]
     sum_exps = sum(exps)
