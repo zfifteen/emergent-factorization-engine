@@ -14,6 +14,27 @@ from cellview.engine.engine import CellViewEngine
 from cellview.metrics.corridor import effective_corridor_width, corridor_entropy, viable_region_size
 from cellview.heuristics.core import EnergySpec, dirichlet_energy, arctan_geodesic_energy, z_metric_energy
 
+# Scale Guard: PR #14 revealed that N < 1e6 leads to geometric clustering bias. 
+# We set a stricter threshold (1e9) for scale-representative dynamics.
+MIN_GATE_N = 1_000_000_000
+
+# Synthetic Unbalanced Gates (from PR #14 analysis)
+# These test emergent signals when factors are far from sqrt(N)
+SYNTHETIC_GATES = [
+    {
+        "gate": "G_UNBAL_MILD",
+        "N": 999963500037,    # N ≈ 10^12
+        "p": 499979,          # p << sqrt(N)
+        "note": "Moderate imbalance; |p - sqrt(N)| approx 500k"
+    },
+    {
+        "gate": "G_UNBAL_STRONG",
+        "N": 1000003900057,   # N ≈ 10^12
+        "p": 100003,          # p <<< sqrt(N)
+        "note": "Strong imbalance; p far outside standard corridors"
+    }
+]
+
 def run_experiment(args):
     # 1. Setup Output Directory
     out_dir = Path(args.output_dir)
@@ -21,8 +42,14 @@ def run_experiment(args):
     
     # 2. Get Gates
     ladder = generate_verification_ladder()
+    # Convert ladder objects to dicts for uniform handling with synthetics
+    all_available = []
+    for g in ladder:
+        all_available.append({"gate": g.gate, "N": g.N, "p": g.p, "note": "Ladder gate"})
+    all_available.extend(SYNTHETIC_GATES)
+
     target_gates = set(args.gates)
-    gates_to_run = [g for g in ladder if g.gate in target_gates]
+    gates_to_run = [g for g in all_available if g["gate"] in target_gates]
     
     if not gates_to_run:
         print(f"No gates found matching {target_gates}")
@@ -31,15 +58,19 @@ def run_experiment(args):
     results_summary = []
 
     for gate in gates_to_run:
-        print(f"Running ablation for {gate.gate} (N={gate.N})...")
+        N = gate["N"]
         
-        N = gate.N
-        p_true = gate.p
+        # Scale Guard check
+        if N < MIN_GATE_N:
+            print(f"Skipping {gate['gate']} (N={N}): Below Scale Guard threshold ({MIN_GATE_N:.0e})")
+            continue
+
+        print(f"Running ablation for {gate['gate']} (N={N})...")
+        
+        p_true = gate["p"]
         sqrt_N = isqrt(N)
         
         # 3. Generate Candidate Domain
-        # Issue #11 specifies +/- band around sqrt(N). 
-        # Note: For unbalanced gates (G100+), p << sqrt(N), so p is absent from this band.
         half_width = args.candidate_halfwidth
         
         if args.center_on_p:
@@ -55,9 +86,8 @@ def run_experiment(args):
         
         # Check if p_true is in band
         p_in_band = (start <= p_true <= end)
-        if not p_in_band and args.center_on_p:
-             # Should not happen with --center-on-p unless clamped
-             print(f"  Warning: p_true ({p_true}) is NOT in band [{start}, {end}] even with --center-on-p")
+        if not p_in_band:
+             print(f"  Warning: p_true ({p_true}) is NOT in band [{start}, {end}]")
 
         print(f"  Generating candidates around {center} [{start}, {end}]...")
         candidates = list(range(start, end + 1))
@@ -119,7 +149,7 @@ def run_experiment(args):
         
         # Save logs
         log_data = {
-            "gate": gate.gate,
+            "gate": gate["gate"],
             "N": str(N),
             "p_true": str(p_true),
             "p_in_band": p_in_band,
@@ -142,13 +172,12 @@ def run_experiment(args):
                 },
                 "dg_episodes": emergent_result["dg_episodes"],
                 "active_candidates_per_step": [
-                    # Downsample: only record first 1000 active candidates per step to avoid huge logs
                     step_active[:1000] for step_active in emergent_result.get("active_candidates_per_step", [])
                 ]
             }
         }
         
-        log_file = out_dir / f"ablation_{gate.gate}.json"
+        log_file = out_dir / f"ablation_{gate['gate']}.json"
         with open(log_file, 'w') as f:
             json.dump(log_data, f, indent=2)
             
@@ -158,7 +187,7 @@ def run_experiment(args):
             improvement = (rank_base - rank_emergent) / rank_base
             
         results_summary.append({
-            "gate": gate.gate,
+            "gate": gate["gate"],
             "p_in_band": p_in_band,
             "baseline_rank": rank_base,
             "emergent_rank": rank_emergent,
@@ -175,7 +204,7 @@ def run_experiment(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run corridor-width ablation experiments.")
-    parser.add_argument("--gates", nargs="+", default=["G100", "G110", "G120"], help="Gates to test")
+    parser.add_argument("--gates", nargs="+", default=["G100", "G110", "G120", "G_UNBAL_MILD", "G_UNBAL_STRONG"], help="Gates to test")
     parser.add_argument("--candidate_halfwidth", type=int, default=50000, help="Half-width of candidate band")
     parser.add_argument("--swap_steps", type=int, default=500, help="Number of swap steps")
     parser.add_argument("--output_dir", default="logs/ablation/", help="Output directory")
