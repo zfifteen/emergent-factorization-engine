@@ -23,6 +23,15 @@ Success criteria
 - A factor of N appears early in the geometrically ranked list and is certified with logged `N mod d`/`gcd(N, d)`, with a replayable artifact bundle.
 - DG/aggregation signals measurably improve corridor selection versus current baseline ranking.
 
+### Validation Criterion: Δ > 0
+
+For emergent vs baseline validation:
+- **Success**: emergent_rank < baseline_rank (Δ > 0) on tested gates
+- **Δ definition**: baseline_rank - emergent_rank (positive = improvement)
+- **Rationale**: Novel method validation requires *consistent* improvement, not arbitrary percentage thresholds
+- **Percentage improvements**: Computed for analysis, not pass/fail criteria
+- Any Δ > 0 demonstrates emergent dynamics provide predictive signal beyond geometric heuristics
+
 Guardrails for all work here
 - No hard-coding of factors; no external factoring services; no stochastic nondeterminism beyond seeded RNG.
 - All configs/readers pull N from the canonical challenge definition; any change to N is treated as breaking.

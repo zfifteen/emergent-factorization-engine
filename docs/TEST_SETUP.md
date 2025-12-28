@@ -24,6 +24,15 @@ Then:
 
 The long-term intent is to reuse these signals as new observables for **Geofac** and the **127-challenge**.
 
+### Success Criterion for Emergent Validation
+
+When comparing emergent cell-view dynamics against geometric baseline:
+- **Pass condition**: Emergent rank < Baseline rank (Δ > 0) on tested semiprimes
+- **Δ definition**: Baseline_rank - Emergent_rank (positive = improvement)
+- **Rationale**: Novel method validation requires *consistent* improvement, not arbitrary percentage thresholds
+- **Percentage improvements**: Informational only, not pass/fail criteria
+- Any Δ > 0 demonstrates that emergent competencies provide predictive signal beyond pure geometric heuristics
+
 ---
 
 ## 2. Levin-style ingredients we imported
