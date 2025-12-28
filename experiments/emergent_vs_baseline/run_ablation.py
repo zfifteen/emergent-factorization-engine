@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 """
 Ablation runner comparing emergent ranking vs baseline certification on dense bands.
+
+Success criterion: Δ > 0 (emergent_rank < baseline_rank)
+- Δ definition: baseline_rank - emergent_rank
+- Pass condition: Emergent rank < Baseline rank on all tested gates
+- Rationale: Novel method validation requires consistent improvement,
+  not arbitrary percentage thresholds. Any Δ > 0 demonstrates
+  predictive signal beyond geometric heuristics.
+
+Percentage improvements are computed for analysis but are not pass/fail criteria.
 """
 
 import argparse

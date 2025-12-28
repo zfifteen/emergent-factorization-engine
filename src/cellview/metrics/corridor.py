@@ -1,4 +1,13 @@
-"""Corridor-width metrics for ablation experiments."""
+"""Corridor-width metrics for ablation experiments.
+
+Validation criterion for emergent vs baseline comparison:
+- Success: emergent_rank < baseline_rank (Δ > 0)
+- Lower rank = narrower effective corridor = better performance
+- Percentage reductions are informational, not pass/fail criteria
+
+Rationale: Novel method validation requires consistent improvement (Δ > 0),
+not arbitrary percentage thresholds with no theoretical basis.
+"""
 
 from math import exp, log
 from typing import List, Tuple
@@ -6,7 +15,14 @@ from typing import List, Tuple
 
 def effective_corridor_width(sorted_candidates: List[int], p_true: int) -> int:
     """Return 1-based rank of true factor p in sorted candidate list.
-    Lower rank = narrower corridor. If p_true is not in sorted_candidates, returns len(sorted_candidates) + 1."""
+    
+    Lower rank = narrower corridor = better ranking performance.
+    
+    Success criterion: emergent_rank < baseline_rank (Δ > 0)
+    where Δ = baseline_rank - emergent_rank.
+    
+    If p_true is not in sorted_candidates, returns len(sorted_candidates) + 1.
+    """
     for rank, candidate in enumerate(sorted_candidates, 1):
         if candidate == p_true:
             return rank

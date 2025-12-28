@@ -60,6 +60,15 @@ Purpose: build a deterministic, reproducible cell-view search engine that surfac
 - Integration tests on small semiprimes with known factors injected into domain; verify factor appears in top-m and logs cert.
 - Determinism check: same seed/config → identical logs and final lattice.
 
+### Success Criterion: Δ > 0 for Emergent vs Baseline
+
+When validating emergent ranking against geometric baseline:
+- **Pass condition**: emergent_rank < baseline_rank (Δ > 0) on all tested gates
+- **Δ definition**: baseline_rank - emergent_rank (positive indicates improvement)
+- **Rationale**: Novel method validation requires *consistent* improvement, not arbitrary percentage thresholds. No prior literature establishes expected improvement magnitudes for emergent cell-view dynamics on factorization landscapes.
+- **Percentage improvements**: Computed for analysis and reporting, but not used as pass/fail criteria
+- Any Δ > 0 demonstrates that emergent dynamics (DG, aggregation, algotype mixing) provide predictive signal beyond pure geometric heuristics
+
 ## 8) Scalability & perf
 - Use Python `int`/gmpy2 (or decimal where appropriate) for N and n; if numpy is used, enforce object dtype to avoid overflow; avoid float drift where ordering matters.
 - Cache/memoize energies per candidate (position-independent) to avoid recomputation in swaps.

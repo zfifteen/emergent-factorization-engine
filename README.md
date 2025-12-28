@@ -8,6 +8,28 @@ The engine instantiates Levin’s decentralization by assigning every integer �
 
 This is not a practical competitor to GNFS / deployed RSA.
 
+## Validation Methodology: Emergent vs Baseline Ranking
+
+### Success Criterion: Δ > 0
+
+This project validates a novel emergent ranking method against a geometric baseline. The validation criterion is:
+
+> **Δ > 0**: Emergent ranking must consistently outperform geometric baseline (emergent_rank < baseline_rank).
+
+No minimum percentage threshold is applied because:
+1. **No prior literature**: No existing work establishes expected improvement magnitudes for emergent cell-view ranking on factorization landscapes
+2. **Arbitrary thresholds conflate concerns**: Percentage cutoffs confuse statistical significance with practical utility
+3. **Novel method validation**: For new methods, *consistent* improvement across test cases is the appropriate scientific criterion
+
+**Percentage improvements are reported for analysis but are not pass/fail criteria.** Any Δ > 0 demonstrates that emergent dynamics provide predictive signal beyond pure geometric heuristics.
+
+### Baseline Comparison
+
+- **Geometric baseline**: Candidates sorted by `|n - √N|` (distance from geometric mean)
+- **Emergent method**: Cell-view dynamics with mixed algotypes, DG, and aggregation signals
+- **Validation metric**: Rank of true factor p in sorted candidate list (lower = better)
+- **Success**: emergent_rank < baseline_rank on tested gates
+
 ### Meta-Cell Corridor Mode (hierarchical Levin V2)
 For the 127-bit regime, dense ±50M bands around √N proved brittle. The meta-cell pipeline elevates Levin sorting: Stage 1 ranks *corridors* (ranges) by resonance energy estimated from sparse samples; Stage 2 expands only the top-ranked corridors into dense atomic cells for the usual Levin swaps and trial certification. This two-stage sort turns “guess the band” into “global sparse scan → local dense zoom,” preserving the geometry-first, arithmetic-last doctrine while keeping memory within guardrails.
 
