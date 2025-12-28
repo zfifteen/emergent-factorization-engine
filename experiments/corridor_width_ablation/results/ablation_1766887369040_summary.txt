@@ -1,0 +1,15 @@
+CORRIDOR-WIDTH ABLATION EXPERIMENT SUMMARY
+============================================================
+
+Gate     Baseline     Emergent     Reduction    p-value   
+------------------------------------------------------------
+G100     25237        1            100.0       %
+G110     25141        1            100.0       %
+G120     24946        1            100.0       %
+------------------------------------------------------------
+
+Mean rank reduction: 100.0%
+Cohen's d: 169.321
+p-value: 0.0000
+
+DECISION: PROCEED to G127
