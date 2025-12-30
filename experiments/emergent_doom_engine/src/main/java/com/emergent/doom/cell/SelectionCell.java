@@ -17,6 +17,7 @@ package com.emergent.doom.cell;
  */
 public abstract class SelectionCell<T extends SelectionCell<T>> implements Cell<T> {
     protected final int value;
+    private int idealPos = 0;  // Mutable: starts at 0, increments on swap denial
 
     protected SelectionCell(int value) {
         this.value = value;
@@ -26,6 +27,18 @@ public abstract class SelectionCell<T extends SelectionCell<T>> implements Cell<
         return value;
     }
 
+    public int getIdealPos() {
+        return idealPos;
+    }
+
+    public void incrementIdealPos() {
+        idealPos++;
+    }
+
+    public void setIdealPos(int idealPos) {
+        this.idealPos = idealPos;
+    }
+
     @Override
     public Algotype getAlgotype() {
         return Algotype.SELECTION;  // Baked-in
@@ -33,6 +46,4 @@ public abstract class SelectionCell<T extends SelectionCell<T>> implements Cell<
 
     @Override
     public abstract int compareTo(T other);
-
-    // Stub: Future Selection-specific (e.g., int getIdealPos();)
 }

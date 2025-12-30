@@ -2,6 +2,7 @@ package com.emergent.doom.execution;
 
 import com.emergent.doom.cell.Algotype;
 import com.emergent.doom.cell.Cell;
+import com.emergent.doom.cell.SelectionCell;
 import com.emergent.doom.probe.Probe;
 import com.emergent.doom.swap.SwapEngine;
 import com.emergent.doom.topology.BubbleTopology;
@@ -58,6 +59,13 @@ public class ExecutionEngine<T extends Cell<T>> {
         this.currentStep = 0;
         this.converged = false;
 
+        // Initialize SelectionCell ideal positions to correct sorted positions
+        for (int i = 0; i < cells.length; i++) {
+            if (cells[i] instanceof SelectionCell) {
+                ((SelectionCell<?>) cells[i]).setIdealPos(computeSelectionTarget(i));
+            }
+        }
+
         // Record initial state
         probe.recordSnapshot(0, cells, 0);
     }
@@ -85,8 +93,9 @@ public class ExecutionEngine<T extends Cell<T>> {
                     neighbors = insertionTopology.getNeighbors(i, cells.length, algotype);
                     break;
                 case SELECTION:
-                    // Compute ideal target: leftmost position where cell's value belongs (count smaller values)
-                    int target = computeSelectionTarget(i);
+                    // Get dynamic ideal target from cell state, clamped to valid index
+                    SelectionCell<?> selCell = (SelectionCell<?>) cells[i];
+                    int target = Math.min(selCell.getIdealPos(), cells.length - 1);
                     neighbors = Arrays.asList(target);
                     break;
                 default:
@@ -115,6 +124,12 @@ public class ExecutionEngine<T extends Cell<T>> {
                         // Swap with target if value < target value
                         if (cells[i].compareTo(cells[j]) < 0) { // smaller than target
                             shouldSwap = true;
+                        } else {
+                            // Swap denied: increment ideal position if not at end
+                            SelectionCell<?> selCell = (SelectionCell<?>) cells[i];
+                            if (selCell.getIdealPos() < cells.length - 1) {
+                                selCell.incrementIdealPos();
+                            }
                         }
                         break;
                 }
