@@ -14,12 +14,12 @@ package com.emergent.doom.cell;
  *   STEP[2]: Return fixed SELECTION algotype.
  *   STEP[3]: Domain impls compareTo.
  * OUTPUTS: Cell<T> with SELECTION policy.
- * DEPENDENCIES: Cell interface; mutable idealPos for Levin spec.
+ * DEPENDENCIES: Cell interface; internal idealPos state and accessors.
  * TEMPLATE_END
  */
 public abstract class SelectionCell<T extends SelectionCell<T>> implements Cell<T> {
     protected final int value;
-    private int idealPos = 0;  // Mutable: starts at 0, increments on swap denial per Levin p.9
+    private int idealPos;  // Mutable: starts at 0, increments on swap denial per Levin p.9
 
     protected SelectionCell(int value) {
         this.value = value;

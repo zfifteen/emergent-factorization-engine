@@ -2,18 +2,27 @@ package com.emergent.doom.topology;
 
 import com.emergent.doom.cell.Algotype;
 import com.emergent.doom.cell.Cell;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
  * Insertion topology: Prefix left view per Levin paper.
- * Cells see all positions to the left (0 to position-1).
+ * Optimizes by returning only the immediate left neighbor (position-1)
+ * since the swap logic currently only acts on that neighbor.
  */
 public class InsertionTopology<T extends Cell<T>> implements Topology<T> {
     @Override
     public List<Integer> getNeighbors(int position, int arraySize, Algotype algotype) {
-        return IntStream.range(0, position).boxed().collect(Collectors.toList());
+        if (algotype != null && algotype != Algotype.INSERTION) {
+            throw new IllegalArgumentException("InsertionTopology only supports INSERTION algotype");
+        }
+        
+        if (position > 0) {
+            return Arrays.asList(position - 1);
+        }
+        return Arrays.asList();
     }
 
     @Override

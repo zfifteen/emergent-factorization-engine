@@ -1,5 +1,6 @@
 package com.emergent.doom.swap;
 
+import com.emergent.doom.cell.Algotype;
 import com.emergent.doom.cell.Cell;
 
 /**
@@ -15,6 +16,11 @@ public class IntCell implements Cell<IntCell> {
 
     public int getValue() {
         return value;
+    }
+
+    @Override
+    public Algotype getAlgotype() {
+        return Algotype.BUBBLE;
     }
 
     @Override

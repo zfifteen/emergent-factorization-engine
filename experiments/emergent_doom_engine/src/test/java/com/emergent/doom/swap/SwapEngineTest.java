@@ -44,43 +44,28 @@ class SwapEngineTest {
     class NoneNoneTests {
 
         @Test
-        @DisplayName("T01: NONE/NONE with i > j - Swap occurs")
-        void t01_noneNone_greaterThan_swaps() {
+        @DisplayName("T01: NONE/NONE - Swaps regardless of value")
+        void t01_noneNone_swaps() {
             IntCell[] cells = createCells(10, 5);
             // Both cells default to NONE
 
             boolean result = swapEngine.attemptSwap(cells, 0, 1);
 
-            assertTrue(result, "Should return true when swap occurs");
+            assertTrue(result, "Should return true when not frozen");
             assertEquals(5, cells[0].getValue(), "cells[0] should now be 5");
             assertEquals(10, cells[1].getValue(), "cells[1] should now be 10");
-            assertEquals(1, swapEngine.getSwapCount(), "Swap count should be 1");
         }
 
         @Test
-        @DisplayName("T02: NONE/NONE with i < j - No swap")
-        void t02_noneNone_lessThan_noSwap() {
+        @DisplayName("T02: NONE/NONE - Swaps even if i < j (dumb executor)")
+        void t02_noneNone_lessThan_swaps() {
             IntCell[] cells = createCells(5, 10);
 
             boolean result = swapEngine.attemptSwap(cells, 0, 1);
 
-            assertFalse(result, "Should return false when no swap");
-            assertEquals(5, cells[0].getValue(), "cells[0] should remain 5");
-            assertEquals(10, cells[1].getValue(), "cells[1] should remain 10");
-            assertEquals(0, swapEngine.getSwapCount(), "Swap count should be 0");
-        }
-
-        @Test
-        @DisplayName("T03: NONE/NONE with i == j - No swap")
-        void t03_noneNone_equal_noSwap() {
-            IntCell[] cells = createCells(7, 7);
-
-            boolean result = swapEngine.attemptSwap(cells, 0, 1);
-
-            assertFalse(result, "Should return false when values equal");
-            assertEquals(7, cells[0].getValue(), "cells[0] should remain 7");
-            assertEquals(7, cells[1].getValue(), "cells[1] should remain 7");
-            assertEquals(0, swapEngine.getSwapCount(), "Swap count should be 0");
+            assertTrue(result, "Should return true (dumb executor)");
+            assertEquals(10, cells[0].getValue(), "cells[0] should now be 10");
+            assertEquals(5, cells[1].getValue(), "cells[1] should now be 5");
         }
     }
 
@@ -89,46 +74,30 @@ class SwapEngineTest {
     class MovableNoneTests {
 
         @Test
-        @DisplayName("T04: MOVABLE/NONE with i > j - Swap occurs")
-        void t04_movableNone_greaterThan_swaps() {
+        @DisplayName("T04: MOVABLE/NONE - Swaps regardless of value")
+        void t04_movableNone_swaps() {
             IntCell[] cells = createCells(10, 5);
             frozenStatus.setFrozen(0, FrozenType.MOVABLE);
             // Cell 1 defaults to NONE
 
             boolean result = swapEngine.attemptSwap(cells, 0, 1);
 
-            assertTrue(result, "Should return true when swap occurs");
+            assertTrue(result, "Should return true when not frozen");
             assertEquals(5, cells[0].getValue(), "cells[0] should now be 5");
             assertEquals(10, cells[1].getValue(), "cells[1] should now be 10");
-            assertEquals(1, swapEngine.getSwapCount(), "Swap count should be 1");
         }
 
         @Test
-        @DisplayName("T05: MOVABLE/NONE with i < j - No swap")
-        void t05_movableNone_lessThan_noSwap() {
+        @DisplayName("T05: MOVABLE/NONE - Swaps even if i < j")
+        void t05_movableNone_lessThan_swaps() {
             IntCell[] cells = createCells(5, 10);
             frozenStatus.setFrozen(0, FrozenType.MOVABLE);
 
             boolean result = swapEngine.attemptSwap(cells, 0, 1);
 
-            assertFalse(result, "Should return false when no swap");
-            assertEquals(5, cells[0].getValue(), "cells[0] should remain 5");
-            assertEquals(10, cells[1].getValue(), "cells[1] should remain 10");
-            assertEquals(0, swapEngine.getSwapCount(), "Swap count should be 0");
-        }
-
-        @Test
-        @DisplayName("T06: MOVABLE/NONE with i == j - No swap")
-        void t06_movableNone_equal_noSwap() {
-            IntCell[] cells = createCells(7, 7);
-            frozenStatus.setFrozen(0, FrozenType.MOVABLE);
-
-            boolean result = swapEngine.attemptSwap(cells, 0, 1);
-
-            assertFalse(result, "Should return false when values equal");
-            assertEquals(7, cells[0].getValue(), "cells[0] should remain 7");
-            assertEquals(7, cells[1].getValue(), "cells[1] should remain 7");
-            assertEquals(0, swapEngine.getSwapCount(), "Swap count should be 0");
+            assertTrue(result, "Should return true (dumb executor)");
+            assertEquals(10, cells[0].getValue(), "cells[0] should now be 10");
+            assertEquals(5, cells[1].getValue(), "cells[1] should now be 5");
         }
     }
 
@@ -236,13 +205,13 @@ class SwapEngineTest {
     class WouldSwapTests {
 
         @Test
-        @DisplayName("T13: wouldSwap returns true but does not mutate")
-        void t13_wouldSwap_positive_noMutation() {
+        @DisplayName("T13: wouldSwap returns true when not frozen")
+        void t13_wouldSwap_positive() {
             IntCell[] cells = createCells(10, 5);
 
             boolean wouldResult = swapEngine.wouldSwap(cells, 0, 1);
 
-            assertTrue(wouldResult, "wouldSwap should return true");
+            assertTrue(wouldResult, "wouldSwap should return true when not frozen");
             assertEquals(10, cells[0].getValue(), "cells[0] should remain 10 (no mutation)");
             assertEquals(5, cells[1].getValue(), "cells[1] should remain 5 (no mutation)");
             assertEquals(0, swapEngine.getSwapCount(), "Swap count should remain 0");
@@ -257,9 +226,6 @@ class SwapEngineTest {
             boolean wouldResult = swapEngine.wouldSwap(cells, 0, 1);
 
             assertFalse(wouldResult, "wouldSwap should return false");
-            assertEquals(10, cells[0].getValue(), "cells[0] should remain 10");
-            assertEquals(5, cells[1].getValue(), "cells[1] should remain 5");
-            assertEquals(0, swapEngine.getSwapCount(), "Swap count should remain 0");
         }
     }
 

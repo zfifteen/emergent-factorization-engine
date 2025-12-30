@@ -154,14 +154,21 @@ public class ExecutionEngine<T extends Cell<T>> {
                 // Note: neighbors include all left, but only swap with immediate left if conditions met
                 return false;
             case SELECTION:
+                // Guard: Skip if targeting self (prevents drift of correctly placed cells)
+                if (i == j) {
+                    return false;
+                }
+
                 // Swap with target if value < target value
                 if (cells[i].compareTo(cells[j]) < 0) { // smaller than target
                     return true;
                 } else {
                     // Swap denied: increment ideal position if not at end
-                    SelectionCell<?> selCell = (SelectionCell<?>) cells[i];
-                    if (selCell.getIdealPos() < cells.length - 1) {
-                        selCell.incrementIdealPos();
+                    if (cells[i] instanceof SelectionCell) {
+                        SelectionCell<?> selCell = (SelectionCell<?>) cells[i];
+                        if (selCell.getIdealPos() < cells.length - 1) {
+                            selCell.incrementIdealPos();
+                        }
                     }
                     return false;
                 }

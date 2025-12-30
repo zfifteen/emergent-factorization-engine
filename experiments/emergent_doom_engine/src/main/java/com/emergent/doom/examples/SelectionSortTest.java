@@ -45,12 +45,14 @@ public class SelectionSortTest {
 
         ExecutionEngine<TestCell> engine = new ExecutionEngine<>(cells, swapEngine, probe, detector);
 
+        int[] initialValues = Arrays.stream(cells).mapToInt(TestCell::getValue).toArray();
         int steps = engine.runUntilConvergence(100);
         boolean converged = engine.hasConverged();
+        int[] finalValues = Arrays.stream(cells).mapToInt(TestCell::getValue).toArray();
 
         System.out.println("Selection Sort Test");
-        System.out.println("Initial: " + Arrays.toString(Arrays.stream(cells).mapToInt(TestCell::getValue).toArray()));
-        System.out.println("Final:   " + Arrays.toString(Arrays.stream(cells).mapToInt(TestCell::getValue).toArray()));
+        System.out.println("Initial: " + Arrays.toString(initialValues));
+        System.out.println("Final:   " + Arrays.toString(finalValues));
         System.out.println("Steps: " + steps);
         System.out.println("Converged: " + converged);
 

@@ -15,6 +15,9 @@ import java.util.stream.IntStream;
 public class SelectionTopology<T extends Cell<T>> implements Topology<T> {
     @Override
     public List<Integer> getNeighbors(int position, int arraySize, Algotype algotype) {
+        if (algotype != null && algotype != Algotype.SELECTION) {
+            throw new IllegalArgumentException("SelectionTopology only supports SELECTION algotype");
+        }
         // Selection topology requires cell state (idealPos), handled in ExecutionEngine
         // Return empty list as neighbors are determined externally for this algotype
         return Arrays.asList();
