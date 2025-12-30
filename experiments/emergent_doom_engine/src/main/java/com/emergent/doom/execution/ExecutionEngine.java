@@ -59,12 +59,7 @@ public class ExecutionEngine<T extends Cell<T>> {
         this.currentStep = 0;
         this.converged = false;
 
-        // Initialize SelectionCell ideal positions to correct sorted positions
-        for (int i = 0; i < cells.length; i++) {
-            if (cells[i] instanceof SelectionCell) {
-                ((SelectionCell<?>) cells[i]).setIdealPos(computeSelectionTarget(i));
-            }
-        }
+        // SelectionCell idealPos initialized to 0 in constructor (Levin competition)
 
         // Record initial state
         probe.recordSnapshot(0, cells, 0);
@@ -166,18 +161,7 @@ public class ExecutionEngine<T extends Cell<T>> {
         return true;
     }
 
-    /**
-     * Helper: Compute ideal target position for Selection sort (leftmost position where cell's value belongs)
-     */
-    private int computeSelectionTarget(int i) {
-        int count = 0;
-        for (int k = 0; k < cells.length; k++) {
-            if (cells[k].compareTo(cells[i]) < 0) {
-                count++;
-            }
-        }
-        return count;
-    }
+
 
     /**
      * IMPLEMENTED: Run execution until convergence or max steps

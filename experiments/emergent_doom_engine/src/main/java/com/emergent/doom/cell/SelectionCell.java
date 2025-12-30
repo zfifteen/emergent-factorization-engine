@@ -21,6 +21,7 @@ public abstract class SelectionCell<T extends SelectionCell<T>> implements Cell<
 
     protected SelectionCell(int value) {
         this.value = value;
+        this.idealPos = 0;  // Levin: initial ideal position is most left (0)
     }
 
     public int getValue() {
