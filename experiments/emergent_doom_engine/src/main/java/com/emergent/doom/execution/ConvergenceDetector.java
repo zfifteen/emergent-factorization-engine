@@ -23,7 +23,7 @@ public interface ConvergenceDetector<T extends Cell<T>> {
     //   2. Apply detector-specific convergence criteria
     //   3. Return true if criteria met, false otherwise
     // OUTPUTS: boolean - true if execution should terminate
-    // DEPENDENCIES: Probe methods [NOT YET IMPLEMENTED]
+    // DEPENDENCIES: Probe methods
     // NOTE: Different detectors can implement various stopping criteria:
     //       - No swaps in last N steps
     //       - Metric threshold reached

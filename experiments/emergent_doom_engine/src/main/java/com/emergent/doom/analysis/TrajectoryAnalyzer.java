@@ -29,8 +29,8 @@ public class TrajectoryAnalyzer<T extends Cell<T>> {
     //   2. Return list of metric values over time
     // OUTPUTS: List<Double> - metric values at each step
     // DEPENDENCIES:
-    //   - StepSnapshot.getCellStates() [NOT YET IMPLEMENTED]
-    //   - Metric.compute() [DEFINED IN INTERFACE]
+    //   - StepSnapshot.getCellStates()
+    //   - Metric.compute()
     public List<Double> computeMetricTrajectory(List<StepSnapshot<T>> snapshots, Metric<T> metric) {
         // Implementation will go here
         return new ArrayList<>();
@@ -44,7 +44,7 @@ public class TrajectoryAnalyzer<T extends Cell<T>> {
     //      - Add to results list
     //   2. Return list of swap counts
     // OUTPUTS: List<Integer> - swap counts at each step
-    // DEPENDENCIES: StepSnapshot.getSwapCount() [NOT YET IMPLEMENTED]
+    // DEPENDENCIES: StepSnapshot.getSwapCount()
     public List<Integer> extractSwapCounts(List<StepSnapshot<T>> snapshots) {
         // Implementation will go here
         return new ArrayList<>();
@@ -60,7 +60,7 @@ public class TrajectoryAnalyzer<T extends Cell<T>> {
     //   3. When threshold reached, return that step number
     //   4. Return -1 if never converged
     // OUTPUTS: int - step number where convergence occurred, or -1
-    // DEPENDENCIES: StepSnapshot.getSwapCount() [NOT YET IMPLEMENTED]
+    // DEPENDENCIES: StepSnapshot.getSwapCount()
     public int findConvergenceStep(List<StepSnapshot<T>> snapshots, int consecutiveZeroSwaps) {
         // Implementation will go here
         return -1;
@@ -77,7 +77,7 @@ public class TrajectoryAnalyzer<T extends Cell<T>> {
     //      - Add to output string
     //   3. Return formatted string
     // OUTPUTS: String - multi-line text visualization
-    // DEPENDENCIES: StepSnapshot methods [SOME NOT YET IMPLEMENTED]
+    // DEPENDENCIES: StepSnapshot methods
     public String visualizeTrajectory(List<StepSnapshot<T>> snapshots, int maxSnapshotsToShow) {
         // Implementation will go here
         return "";
@@ -90,7 +90,7 @@ public class TrajectoryAnalyzer<T extends Cell<T>> {
     //   2. Get timestamp from last snapshot
     //   3. Return difference in nanoseconds
     // OUTPUTS: long - elapsed time in nanoseconds
-    // DEPENDENCIES: StepSnapshot.getTimestamp() [NOT YET IMPLEMENTED]
+    // DEPENDENCIES: StepSnapshot.getTimestamp()
     public long getTotalExecutionTime(List<StepSnapshot<T>> snapshots) {
         // Implementation will go here
         return 0L;
