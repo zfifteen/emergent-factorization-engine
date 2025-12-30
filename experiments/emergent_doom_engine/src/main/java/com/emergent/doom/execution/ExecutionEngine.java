@@ -88,8 +88,35 @@ public class ExecutionEngine<T extends Cell<T>> {
                 default:
                     throw new IllegalStateException("Unknown algotype: " + algotype);
             }
+            // Apply Levin swap decision logic per algotype
             for (int j : neighbors) {
-                swapEngine.attemptSwap(cells, i, j);
+                boolean shouldSwap = false;
+                switch (algotype) {
+                    case BUBBLE:
+                        // Move left if value < left neighbor, right if value > right neighbor
+                        if (j == i - 1 && cells[i].compareTo(cells[j]) < 0) { // left neighbor, smaller value
+                            shouldSwap = true;
+                        } else if (j == i + 1 && cells[i].compareTo(cells[j]) > 0) { // right neighbor, bigger value
+                            shouldSwap = true;
+                        }
+                        break;
+                    case INSERTION:
+                        // Move left only if left side sorted AND value < left neighbor
+                        if (j == i - 1 && isLeftSorted(i) && cells[i].compareTo(cells[j]) < 0) {
+                            shouldSwap = true;
+                        }
+                        // Note: neighbors include all left, but only swap with immediate left if conditions met
+                        break;
+                    case SELECTION:
+                        // Swap with target if value < target value
+                        if (cells[i].compareTo(cells[j]) < 0) { // smaller than target
+                            shouldSwap = true;
+                        }
+                        break;
+                }
+                if (shouldSwap) {
+                    swapEngine.attemptSwap(cells, i, j);
+                }
             }
         }
 
@@ -107,7 +134,19 @@ public class ExecutionEngine<T extends Cell<T>> {
 
         return swaps;
     }
-    
+
+    /**
+     * Helper: Check if cells 0 to i-1 are sorted in ascending order
+     */
+    private boolean isLeftSorted(int i) {
+        for (int k = 0; k < i - 1; k++) {
+            if (cells[k].compareTo(cells[k + 1]) > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * IMPLEMENTED: Run execution until convergence or max steps
      * @return total number of steps executed
