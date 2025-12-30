@@ -8,6 +8,8 @@ import com.emergent.doom.topology.BubbleTopology;
 import com.emergent.doom.topology.InsertionTopology;
 import com.emergent.doom.topology.SelectionTopology;
 
+import java.util.Arrays;
+
 import java.util.List;
 
 /**
@@ -83,7 +85,9 @@ public class ExecutionEngine<T extends Cell<T>> {
                     neighbors = insertionTopology.getNeighbors(i, cells.length, algotype);
                     break;
                 case SELECTION:
-                    neighbors = selectionTopology.getNeighbors(i, cells.length, algotype);
+                    // Compute ideal target: leftmost position where cell's value belongs (count smaller values)
+                    int target = computeSelectionTarget(i);
+                    neighbors = Arrays.asList(target);
                     break;
                 default:
                     throw new IllegalStateException("Unknown algotype: " + algotype);
@@ -145,6 +149,19 @@ public class ExecutionEngine<T extends Cell<T>> {
             }
         }
         return true;
+    }
+
+    /**
+     * Helper: Compute ideal target position for Selection sort (leftmost position where cell's value belongs)
+     */
+    private int computeSelectionTarget(int i) {
+        int count = 0;
+        for (int k = 0; k < cells.length; k++) {
+            if (cells[k].compareTo(cells[i]) < 0) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
