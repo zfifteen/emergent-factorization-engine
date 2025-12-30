@@ -1,9 +1,12 @@
 package com.emergent.doom.execution;
 
+import com.emergent.doom.cell.Algotype;
 import com.emergent.doom.cell.Cell;
 import com.emergent.doom.probe.Probe;
 import com.emergent.doom.swap.SwapEngine;
-import com.emergent.doom.topology.Topology;
+import com.emergent.doom.topology.BubbleTopology;
+import com.emergent.doom.topology.InsertionTopology;
+import com.emergent.doom.topology.SelectionTopology;
 
 import java.util.List;
 
@@ -25,7 +28,9 @@ import java.util.List;
 public class ExecutionEngine<T extends Cell<T>> {
     
     private final T[] cells;
-    private final Topology<T> topology;
+    private final BubbleTopology<T> bubbleTopology;
+    private final InsertionTopology<T> insertionTopology;
+    private final SelectionTopology<T> selectionTopology;
     private final SwapEngine<T> swapEngine;
     private final Probe<T> probe;
     private final ConvergenceDetector<T> convergenceDetector;
@@ -34,22 +39,23 @@ public class ExecutionEngine<T extends Cell<T>> {
     private boolean converged;
     
     /**
-     * IMPLEMENTED: Initialize the execution engine
+     * IMPLEMENTED: Initialize the execution engine with algotype-based topology dispatch
      */
     public ExecutionEngine(
             T[] cells,
-            Topology<T> topology,
             SwapEngine<T> swapEngine,
             Probe<T> probe,
             ConvergenceDetector<T> convergenceDetector) {
         this.cells = cells;
-        this.topology = topology;
+        this.bubbleTopology = new BubbleTopology<>();
+        this.insertionTopology = new InsertionTopology<>();
+        this.selectionTopology = new SelectionTopology<>();
         this.swapEngine = swapEngine;
         this.probe = probe;
         this.convergenceDetector = convergenceDetector;
         this.currentStep = 0;
         this.converged = false;
-        
+
         // Record initial state
         probe.recordSnapshot(0, cells, 0);
     }
@@ -59,32 +65,46 @@ public class ExecutionEngine<T extends Cell<T>> {
      * @return number of swaps performed in this step
      */
     public int step() {
-        // Get iteration order from topology
-        List<Integer> iterationOrder = topology.getIterationOrder(cells.length);
-        
+        // Get iteration order (use bubble topology as default, all are sequential)
+        List<Integer> iterationOrder = bubbleTopology.getIterationOrder(cells.length);
+
         // Reset swap counter for this step
         swapEngine.resetSwapCount();
-        
-        // For each cell in iteration order, try swapping with neighbors
+
+        // For each cell in iteration order, try swapping with neighbors based on algotype
         for (int i : iterationOrder) {
-            List<Integer> neighbors = topology.getNeighbors(i, cells.length, cells[i].getAlgotype());
+            Algotype algotype = cells[i].getAlgotype();
+            List<Integer> neighbors;
+            switch (algotype) {
+                case BUBBLE:
+                    neighbors = bubbleTopology.getNeighbors(i, cells.length, algotype);
+                    break;
+                case INSERTION:
+                    neighbors = insertionTopology.getNeighbors(i, cells.length, algotype);
+                    break;
+                case SELECTION:
+                    neighbors = selectionTopology.getNeighbors(i, cells.length, algotype);
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown algotype: " + algotype);
+            }
             for (int j : neighbors) {
                 swapEngine.attemptSwap(cells, i, j);
             }
         }
-        
+
         // Get swap count for this step
         int swaps = swapEngine.getSwapCount();
-        
+
         // Increment step counter
         currentStep++;
-        
+
         // Record snapshot
         probe.recordSnapshot(currentStep, cells, swaps);
-        
+
         // Check convergence
         converged = convergenceDetector.hasConverged(probe, currentStep);
-        
+
         return swaps;
     }
     
@@ -136,7 +156,9 @@ public class ExecutionEngine<T extends Cell<T>> {
         converged = false;
         probe.clear();
         swapEngine.resetSwapCount();
-        topology.reset();
+        bubbleTopology.reset();
+        insertionTopology.reset();
+        selectionTopology.reset();
         convergenceDetector.reset();
         probe.recordSnapshot(0, cells, 0);
     }
