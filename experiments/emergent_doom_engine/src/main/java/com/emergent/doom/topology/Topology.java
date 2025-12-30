@@ -1,5 +1,6 @@
 package com.emergent.doom.topology;
 
+import com.emergent.doom.cell.Algotype;
 import com.emergent.doom.cell.Cell;
 import java.util.List;
 
@@ -25,16 +26,17 @@ public interface Topology<T extends Cell<T>> {
     // INPUTS:
     //   - position (int) - the index of the cell
     //   - arraySize (int) - the total number of cells in the array
+    //   - algotype (Algotype) - the cell's sorting algorithm policy
     // PROCESS:
     //   1. Apply topology-specific rules to determine neighbors
-    //   2. Return list of valid neighbor indices
-    //   3. Indices must be in range [0, arraySize)
+    //   2. Dispatch based on algotype per Levin paper behaviors
+    //   3. Return list of valid neighbor indices
+    //   4. Indices must be in range [0, arraySize)
     // OUTPUTS: List<Integer> - indices of neighboring cells
-    // DEPENDENCIES: None (implementation-specific)
+    // DEPENDENCIES: Algotype enum
     // NOTE: The neighborhood definition is critical to emergent behavior.
-    //       Linear neighborhoods create local interactions.
-    //       Global neighborhoods allow long-range reorganization.
-    List<Integer> getNeighbors(int position, int arraySize);
+    //       Algotype determines view scope: adj (Bubble), prefix (Insertion), target (Selection).
+    List<Integer> getNeighbors(int position, int arraySize, Algotype algotype);
     
     // PURPOSE: Get the iteration order for processing cells in a step
     // INPUTS: arraySize (int) - the total number of cells

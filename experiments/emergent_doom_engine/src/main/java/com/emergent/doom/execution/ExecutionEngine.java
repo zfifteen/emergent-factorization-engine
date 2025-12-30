@@ -67,7 +67,7 @@ public class ExecutionEngine<T extends Cell<T>> {
         
         // For each cell in iteration order, try swapping with neighbors
         for (int i : iterationOrder) {
-            List<Integer> neighbors = topology.getNeighbors(i, cells.length);
+            List<Integer> neighbors = topology.getNeighbors(i, cells.length, cells[i].getAlgotype());
             for (int j : neighbors) {
                 swapEngine.attemptSwap(cells, i, j);
             }
