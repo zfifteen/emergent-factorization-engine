@@ -4,6 +4,8 @@ package com.emergent.doom.cell;
  * Abstract base for Levin cell-view Selection Sort cells.
  * Baked-in: Algotype.SELECTION (target chasing, long-range).
  * Domain extends and impls compareTo.
+ * Note: Contains mutable idealPos state (starts at 0, increments on swap denial per Levin p.9).
+ * This breaks cell immutability but is required for Levin's dynamic position chasing.
  * TEMPLATE_BEGIN
  * PURPOSE: Provide Selection policy foundation (goal-directed).
  * INPUTS: value (int).
@@ -12,12 +14,12 @@ package com.emergent.doom.cell;
  *   STEP[2]: Return fixed SELECTION algotype.
  *   STEP[3]: Domain impls compareTo.
  * OUTPUTS: Cell<T> with SELECTION policy.
- * DEPENDENCIES: Cell interface; future internal idealPos state.
+ * DEPENDENCIES: Cell interface; mutable idealPos for Levin spec.
  * TEMPLATE_END
  */
 public abstract class SelectionCell<T extends SelectionCell<T>> implements Cell<T> {
     protected final int value;
-    private int idealPos = 0;  // Mutable: starts at 0, increments on swap denial
+    private int idealPos = 0;  // Mutable: starts at 0, increments on swap denial per Levin p.9
 
     protected SelectionCell(int value) {
         this.value = value;

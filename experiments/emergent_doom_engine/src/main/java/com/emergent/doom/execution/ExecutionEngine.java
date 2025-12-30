@@ -77,6 +77,8 @@ public class ExecutionEngine<T extends Cell<T>> {
         swapEngine.resetSwapCount();
 
         // For each cell in iteration order, try swapping with neighbors based on algotype
+        // TODO: Refactor this switch logic into a strategy pattern or delegate to topologies
+        // Currently centralized here due to algotype-specific rules and cell state requirements
         for (int i : iterationOrder) {
             Algotype algotype = cells[i].getAlgotype();
             List<Integer> neighbors;
