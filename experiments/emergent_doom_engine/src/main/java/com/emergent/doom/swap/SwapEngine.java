@@ -15,9 +15,9 @@ import com.emergent.doom.swap.FrozenCellStatus.FrozenType;
  * </ul>
  * </p>
  * 
- * <p><strong>Swap Logic:</strong> A swap occurs when the cell at index i
- * compares greater than the cell at index j (i.e., cells[i] > cells[j])
- * and both cells satisfy frozen constraints.</p>
+ * <p><strong>Swap Logic:</strong> A swap occurs when both cells satisfy
+ * frozen constraints. The comparison decision is handled externally
+ * by the ExecutionEngine per algotype rules.</p>
  * 
  * @param <T> the type of cell
  */
@@ -40,6 +40,7 @@ public class SwapEngine<T extends Cell<T>> {
     
     /**
      * IMPLEMENTED: Attempt to swap cells at positions i and j
+     * The swap decision is made externally; this method only checks frozen constraints.
      * @return true if swap occurred, false otherwise
      */
     public boolean attemptSwap(T[] cells, int i, int j) {
@@ -47,18 +48,13 @@ public class SwapEngine<T extends Cell<T>> {
         if (!frozenStatus.canMove(i) || !frozenStatus.canBeDisplaced(j)) {
             return false;
         }
-        
-        // Check if swap would improve order (cells[i] > cells[j])
-        if (cells[i].compareTo(cells[j]) > 0) {
-            // Perform the swap
-            T temp = cells[i];
-            cells[i] = cells[j];
-            cells[j] = temp;
-            swapCount++;
-            return true;
-        }
-        
-        return false;
+
+        // Perform the swap (decision made externally)
+        T temp = cells[i];
+        cells[i] = cells[j];
+        cells[j] = temp;
+        swapCount++;
+        return true;
     }
     
     /**
@@ -77,15 +73,10 @@ public class SwapEngine<T extends Cell<T>> {
     
     /**
      * IMPLEMENTED: Check if a swap between i and j would be valid
-     * This is useful for lookahead and analysis without state changes
+     * This only checks frozen constraints; decision is external.
      */
     public boolean wouldSwap(T[] cells, int i, int j) {
         // Check frozen constraints (same as attemptSwap)
-        if (!frozenStatus.canMove(i) || !frozenStatus.canBeDisplaced(j)) {
-            return false;
-        }
-        
-        // Check if swap would occur (cells[i] > cells[j])
-        return cells[i].compareTo(cells[j]) > 0;
+        return frozenStatus.canMove(i) && frozenStatus.canBeDisplaced(j);
     }
 }

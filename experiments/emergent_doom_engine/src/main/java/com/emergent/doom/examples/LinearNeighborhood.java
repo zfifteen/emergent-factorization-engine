@@ -1,5 +1,6 @@
 package com.emergent.doom.examples;
 
+import com.emergent.doom.cell.Algotype;
 import com.emergent.doom.cell.Cell;
 import com.emergent.doom.topology.Topology;
 
@@ -33,13 +34,14 @@ public class LinearNeighborhood<T extends Cell<T>> implements Topology<T> {
     }
     
     /**
-     * IMPLEMENTED: Get neighboring indices within the radius
+     * IMPLEMENTED: Get neighboring indices within the radius (ignores algotype for baseline)
      */
     @Override
-    public List<Integer> getNeighbors(int position, int arraySize) {
+    public List<Integer> getNeighbors(int position, int arraySize, Algotype algotype) {
+        // Ignore algotype - return adjacent neighbors as baseline
         int minNeighbor = Math.max(0, position - neighborhoodRadius);
         int maxNeighbor = Math.min(arraySize - 1, position + neighborhoodRadius);
-        
+
         return IntStream.rangeClosed(minNeighbor, maxNeighbor)
                 .filter(i -> i != position)  // Exclude the position itself
                 .boxed()

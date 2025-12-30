@@ -15,7 +15,7 @@ import java.util.Objects;
  * this cell stores N mod p. The sorting behavior naturally drives
  * better factors to the front when cells are swapped by the engine.</p>
  */
-public class RemainderCell implements Cell<RemainderCell> {
+public class RemainderCell extends BubbleCell<RemainderCell> {
     
     private final BigInteger remainder;
     private final int position;
@@ -25,13 +25,14 @@ public class RemainderCell implements Cell<RemainderCell> {
      * IMPLEMENTED: Construct a RemainderCell with target number and position
      */
     public RemainderCell(BigInteger target, int position) {
+        super(0);  // Dummy value; compareTo overridden to use remainder
         if (target == null || target.compareTo(BigInteger.ZERO) <= 0) {
             throw new IllegalArgumentException("Target must be positive");
         }
         if (position < 1) {
             throw new IllegalArgumentException("Position must be >= 1");
         }
-        
+
         this.target = target;
         this.position = position;
         // Calculate remainder = target mod position
@@ -42,17 +43,17 @@ public class RemainderCell implements Cell<RemainderCell> {
      * IMPLEMENTED: Compare this cell to another based on remainder values.
      * Lower remainder = "better" cell (comes first in sorted order).
      */
-    @Override
-    public int compareTo(RemainderCell other) {
-        // Compare remainders - lower remainder is "better"
-        int remainderComparison = this.remainder.compareTo(other.remainder);
-        
-        // If remainders are equal, compare by position for stable sorting
-        if (remainderComparison == 0) {
-            return Integer.compare(this.position, other.position);
-        }
-        
-        return remainderComparison;
+     @Override
+     public int compareTo(RemainderCell other) {
+         // Compare remainders - lower remainder is "better"
+         int remainderComparison = this.remainder.compareTo(other.remainder);
+
+         // If remainders are equal, compare by position for stable sorting
+         if (remainderComparison == 0) {
+             return Integer.compare(this.position, other.position);
+         }
+
+         return remainderComparison;
     }
     
     /**

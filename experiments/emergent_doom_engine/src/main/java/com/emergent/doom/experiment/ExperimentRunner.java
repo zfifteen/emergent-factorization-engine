@@ -60,17 +60,16 @@ public class ExperimentRunner<T extends Cell<T>> {
     public TrialResult<T> runTrial(ExperimentConfig config, int trialNumber) {
         // Create fresh instances for this trial
         T[] cells = cellArrayFactory.get();
-        Topology<T> topology = topologyFactory.get();
         FrozenCellStatus frozenStatus = new FrozenCellStatus();
         SwapEngine<T> swapEngine = new SwapEngine<>(frozenStatus);
         Probe<T> probe = new Probe<>();
         probe.setRecordingEnabled(config.isRecordTrajectory());
-        ConvergenceDetector<T> convergenceDetector = 
+        ConvergenceDetector<T> convergenceDetector =
                 new NoSwapConvergence<>(config.getRequiredStableSteps());
-        
-        // Create execution engine
+
+        // Create execution engine (topologies now created internally based on algotype)
         ExecutionEngine<T> engine = new ExecutionEngine<>(
-                cells, topology, swapEngine, probe, convergenceDetector);
+                cells, swapEngine, probe, convergenceDetector);
         
         // Run execution
         long startTime = System.nanoTime();
