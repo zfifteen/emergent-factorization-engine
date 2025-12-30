@@ -27,4 +27,11 @@ public interface Cell<T extends Cell<T>> extends Comparable<T> {
     // DEPENDENCIES: None
     // NOTE: This is the ONLY method required by the engine.
     //       All domain logic is encapsulated in the implementation.
+
+    /**
+     * Get the algotype (sorting algorithm policy) of this cell.
+     * This determines neighbor visibility and swap rules per Levin paper.
+     * @return the baked-in algotype (BUBBLE, INSERTION, or SELECTION)
+     */
+    Algotype getAlgotype();
 }

@@ -42,18 +42,27 @@ public class RemainderCell implements Cell<RemainderCell> {
      * IMPLEMENTED: Compare this cell to another based on remainder values.
      * Lower remainder = "better" cell (comes first in sorted order).
      */
-    @Override
-    public int compareTo(RemainderCell other) {
-        // Compare remainders - lower remainder is "better"
-        int remainderComparison = this.remainder.compareTo(other.remainder);
-        
-        // If remainders are equal, compare by position for stable sorting
-        if (remainderComparison == 0) {
-            return Integer.compare(this.position, other.position);
-        }
-        
-        return remainderComparison;
-    }
+     @Override
+     public int compareTo(RemainderCell other) {
+         // Compare remainders - lower remainder is "better"
+         int remainderComparison = this.remainder.compareTo(other.remainder);
+
+         // If remainders are equal, compare by position for stable sorting
+         if (remainderComparison == 0) {
+             return Integer.compare(this.position, other.position);
+         }
+
+         return remainderComparison;
+     }
+
+     /**
+      * Temporary implementation - return BUBBLE for existing RemainderCell
+      * TODO: Update when refactoring RemainderCell to extend base class
+      */
+     @Override
+     public Algotype getAlgotype() {
+         return Algotype.BUBBLE;
+     }
     
     /**
      * IMPLEMENTED: Get the remainder value for metrics/analysis
