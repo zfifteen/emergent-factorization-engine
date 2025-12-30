@@ -56,7 +56,8 @@ mvn clean compile
 ### Run Example
 
 ```bash
-mvn exec:java -Dexec.mainClass="com.emergent.doom.examples.FactorizationExperiment"
+mvn package
+java -jar target/emergent-doom-engine-1.0.0-SNAPSHOT.jar
 ```
 
 ## Usage Example
