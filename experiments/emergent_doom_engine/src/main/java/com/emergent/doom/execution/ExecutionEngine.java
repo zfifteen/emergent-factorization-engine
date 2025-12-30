@@ -77,60 +77,11 @@ public class ExecutionEngine<T extends Cell<T>> {
         swapEngine.resetSwapCount();
 
         // For each cell in iteration order, try swapping with neighbors based on algotype
-        // TODO: Refactor this switch logic into a strategy pattern or delegate to topologies
-        // Currently centralized here due to algotype-specific rules and cell state requirements
         for (int i : iterationOrder) {
             Algotype algotype = cells[i].getAlgotype();
-            List<Integer> neighbors;
-            switch (algotype) {
-                case BUBBLE:
-                    neighbors = bubbleTopology.getNeighbors(i, cells.length, algotype);
-                    break;
-                case INSERTION:
-                    neighbors = insertionTopology.getNeighbors(i, cells.length, algotype);
-                    break;
-                case SELECTION:
-                    // Get dynamic ideal target from cell state, clamped to valid index
-                    SelectionCell<?> selCell = (SelectionCell<?>) cells[i];
-                    int target = Math.min(selCell.getIdealPos(), cells.length - 1);
-                    neighbors = Arrays.asList(target);
-                    break;
-                default:
-                    throw new IllegalStateException("Unknown algotype: " + algotype);
-            }
-            // Apply Levin swap decision logic per algotype
+            List<Integer> neighbors = getNeighborsForAlgotype(i, algotype);
             for (int j : neighbors) {
-                boolean shouldSwap = false;
-                switch (algotype) {
-                    case BUBBLE:
-                        // Move left if value < left neighbor, right if value > right neighbor
-                        if (j == i - 1 && cells[i].compareTo(cells[j]) < 0) { // left neighbor, smaller value
-                            shouldSwap = true;
-                        } else if (j == i + 1 && cells[i].compareTo(cells[j]) > 0) { // right neighbor, bigger value
-                            shouldSwap = true;
-                        }
-                        break;
-                    case INSERTION:
-                        // Move left only if left side sorted AND value < left neighbor
-                        if (j == i - 1 && isLeftSorted(i) && cells[i].compareTo(cells[j]) < 0) {
-                            shouldSwap = true;
-                        }
-                        // Note: neighbors include all left, but only swap with immediate left if conditions met
-                        break;
-                    case SELECTION:
-                        // Swap with target if value < target value
-                        if (cells[i].compareTo(cells[j]) < 0) { // smaller than target
-                            shouldSwap = true;
-                        } else {
-                            // Swap denied: increment ideal position if not at end
-                            SelectionCell<?> selCell = (SelectionCell<?>) cells[i];
-                            if (selCell.getIdealPos() < cells.length - 1) {
-                                selCell.incrementIdealPos();
-                            }
-                        }
-                        break;
-                }
-                if (shouldSwap) {
+                if (shouldSwapForAlgotype(i, j, algotype)) {
                     swapEngine.attemptSwap(cells, i, j);
                 }
             }
@@ -161,6 +112,62 @@ public class ExecutionEngine<T extends Cell<T>> {
             }
         }
         return true;
+    }
+
+    /**
+     * Helper: Get neighbors for the given position based on algotype
+     */
+    private List<Integer> getNeighborsForAlgotype(int i, Algotype algotype) {
+        switch (algotype) {
+            case BUBBLE:
+                return bubbleTopology.getNeighbors(i, cells.length, algotype);
+            case INSERTION:
+                return insertionTopology.getNeighbors(i, cells.length, algotype);
+            case SELECTION:
+                // Get dynamic ideal target from cell state
+                SelectionCell<?> selCell = (SelectionCell<?>) cells[i];
+                int target = Math.min(selCell.getIdealPos(), cells.length - 1);
+                return Arrays.asList(target);
+            default:
+                throw new IllegalStateException("Unknown algotype: " + algotype);
+        }
+    }
+
+    /**
+     * Helper: Determine if swap should occur based on Levin algotype rules
+     */
+    private boolean shouldSwapForAlgotype(int i, int j, Algotype algotype) {
+        switch (algotype) {
+            case BUBBLE:
+                // Move left if value < left neighbor, right if value > right neighbor
+                if (j == i - 1 && cells[i].compareTo(cells[j]) < 0) { // left neighbor, smaller value
+                    return true;
+                } else if (j == i + 1 && cells[i].compareTo(cells[j]) > 0) { // right neighbor, bigger value
+                    return true;
+                }
+                return false;
+            case INSERTION:
+                // Move left only if left side sorted AND value < left neighbor
+                if (j == i - 1 && isLeftSorted(i) && cells[i].compareTo(cells[j]) < 0) {
+                    return true;
+                }
+                // Note: neighbors include all left, but only swap with immediate left if conditions met
+                return false;
+            case SELECTION:
+                // Swap with target if value < target value
+                if (cells[i].compareTo(cells[j]) < 0) { // smaller than target
+                    return true;
+                } else {
+                    // Swap denied: increment ideal position if not at end
+                    SelectionCell<?> selCell = (SelectionCell<?>) cells[i];
+                    if (selCell.getIdealPos() < cells.length - 1) {
+                        selCell.incrementIdealPos();
+                    }
+                    return false;
+                }
+            default:
+                return false;
+        }
     }
 
 
