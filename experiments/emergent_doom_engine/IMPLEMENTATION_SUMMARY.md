@@ -169,8 +169,14 @@ Potential enhancements aligned with the specification:
 
 ## Status
 
-✅ **Complete and Functional**
-- All classes implemented
-- Compiles successfully with Maven
+⚠️ **Partial Implementation**
+- Core engine functional: ExecutionEngine, SwapEngine, Probe, StepSnapshot
 - FactorizationExperiment runs and identifies factors
-- No modifications to files outside `experiments/emergent_doom_engine/`
+- Compiles successfully with Maven
+
+**Stub implementations** (return default values, not yet functional):
+- `AggregationValue.compute()` — returns 0.0
+- `DelayedGratificationIndex.compute()` — returns 0.0
+- `ChimericPopulation.createPopulation()` — returns null
+- `ChimericPopulation.countAlgotype()` — returns 0
+- `TrajectoryAnalyzer` — all methods return empty/default values
